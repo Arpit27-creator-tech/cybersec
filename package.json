@@ -4,9 +4,12 @@
   "description": "Cybersecurity landing page with full CRM backend",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node database/seed.js && node server.js",
     "seed": "node database/seed.js",
     "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
