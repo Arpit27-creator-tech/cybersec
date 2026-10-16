@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Newsletter — CyberSec Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Space+Grotesk:wght@300;400;500;600;700&display=block" rel="stylesheet">
+    <style>
+        @font-face{font-family:'SG';src:local('Space Grotesk');font-display:block}
+        @font-face{font-family:'JB';src:local('JetBrains Mono');font-display:block}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{min-height:100%;background:#0a0a0a}
+        body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;color:#fff;font-family:'SG','Space Grotesk',sans-serif}
+        a{color:inherit;text-decoration:none}
+        :root{--red:#c81b1c;--ink:#fff;--sub:#e6e6e6;--lab:#949494;--card:#111;--border:rgba(255,255,255,.08)}
+        .shell{display:flex;min-height:100vh}
+        .side{width:240px;background:#080808;border-right:1px solid var(--border);padding:28px 20px;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+        .side-logo{display:flex;align-items:center;gap:12px;margin-bottom:40px}
+        .side-logo svg{width:32px;height:32px}
+        .side-logo span{font-weight:700;font-size:16px;letter-spacing:-.4px}
+        .side-nav{display:flex;flex-direction:column;gap:4px}
+        .side-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);transition:all .2s;border-left:2px solid transparent}
+        .side-nav a:hover,.side-nav a.active{color:var(--ink);background:rgba(255,255,255,.04);border-left-color:var(--red)}
+        .side-nav a.active{color:var(--red)}
+        .side-nav .sep{height:1px;background:var(--border);margin:16px 0}
+        .side-bottom{margin-top:auto;padding-top:20px;border-top:1px solid var(--border)}
+        .side-user{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:12px}
+        .side-user strong{color:var(--ink);display:block;font-size:13px;margin-bottom:2px}
+        .logout-btn{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);background:none;border:1px solid var(--border);padding:8px 14px;cursor:pointer;transition:all .2s;border-radius:0;width:100%}
+        .logout-btn:hover{color:var(--red);border-color:var(--red)}
+        .main{flex:1;padding:32px 40px}
+        .main h1{font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:8px}
+        .main .subtitle{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);margin-bottom:24px}
+        .tbl-wrap{background:var(--card);border:1px solid var(--border);overflow-x:auto}
+        table{width:100%;border-collapse:collapse}
+        th{font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);text-align:left;padding:12px 24px;border-bottom:1px solid var(--border);font-weight:400}
+        td{padding:14px 24px;border-bottom:1px solid var(--border);font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--sub)}
+        tr:last-child td{border-bottom:none}
+        .badge-active{background:rgba(34,197,94,.15);color:#22c55e;display:inline-block;padding:4px 10px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-family:'JB','JetBrains Mono',monospace}
+        .badge-inactive{background:rgba(148,148,148,.15);color:var(--lab);display:inline-block;padding:4px 10px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-family:'JB','JetBrains Mono',monospace}
+        .del-btn{background:none;border:1px solid rgba(239,68,68,.3);color:#ef4444;font-family:'JB','JetBrains Mono',monospace;font-size:11px;padding:6px 10px;cursor:pointer;border-radius:0;transition:all .2s}
+        .del-btn:hover{background:rgba(239,68,68,.15);border-color:#ef4444}
+        .empty{padding:40px;text-align:center;font-family:'JB','JetBrains Mono',monospace;font-size:14px;color:var(--lab)}
+        .stat-count{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);margin-bottom:20px}
+        .stat-count strong{color:var(--red)}
+        @media(max-width:768px){
+            .shell{flex-direction:column}
+            .side{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:16px;align-items:center}
+            .side-logo{margin-bottom:0;margin-right:auto}
+            .side-nav{flex-direction:row;width:100%;margin-top:12px}
+            .side-nav a{padding:8px 10px;font-size:12px;border-left:none;border-bottom:2px solid transparent}
+            .side-nav a:hover,.side-nav a.active{border-left:none;border-bottom-color:var(--red)}
+            .side-nav .sep{display:none}
+            .side-bottom{margin-top:0;border-top:none;padding-top:0}
+            .main{padding:20px 16px}
+        }
+        :focus-visible{outline:2px solid #fff;outline-offset:3px}
+    </style>
+</head>
+<body>
+<div class="shell">
+    <aside class="side">
+        <a href="/" class="side-logo">
+            <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg"><g stroke="#fff" stroke-width="3" stroke-linecap="butt"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(90,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(180,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(270,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g></svg>
+            <span>CyberSec</span>
+        </a>
+        <nav class="side-nav">
+            <a href="/admin">◆ Dashboard</a>
+            <a href="/admin/leads">◆ Leads</a>
+            <a href="/admin/newsletter" class="active">◆ Newsletter</a>
+            <a href="/admin/email-scanner">◆ Email Scanner</a>
+            <div class="sep"></div>
+            <a href="/admin/settings">◆ Settings</a>
+            <a href="/" target="_blank">◆ View Site</a>
+        </nav>
+        <div class="side-bottom">
+            <div class="side-user"><strong><%= user.username %></strong><%= user.role %></div>
+            <form action="/auth/logout" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="logout-btn">Sign out</button></form>
+        </div>
+    </aside>
+    <main class="main">
+        <h1>Newsletter</h1>
+        <p class="subtitle">Manage email subscribers</p>
+        <p class="stat-count"><strong><%= subscribers.filter(s => s.is_active).length %></strong> active subscribers</p>
+
+        <div class="tbl-wrap">
+            <% if (subscribers.length === 0) { %>
+            <div class="empty">No subscribers yet.</div>
+            <% } else { %>
+            <table>
+                <thead><tr><th>Email</th><th>Status</th><th>Subscribed</th><th>Action</th></tr></thead>
+                <tbody>
+                <% subscribers.forEach(function(sub) { %>
+                <tr id="sub-<%= sub.id %>">
+                    <td style="color:var(--ink)"><%= sub.email %></td>
+                    <td><span class="<%= sub.is_active ? 'badge-active' : 'badge-inactive' %>"><%= sub.is_active ? 'Active' : 'Inactive' %></span></td>
+                    <td><%= new Date(sub.subscribed_at).toLocaleDateString() %></td>
+                    <td>
+                        <% if (sub.is_active) { %>
+                        <button class="del-btn" onclick="unsub(<%= sub.id %>)">Unsubscribe</button>
+                        <% } %>
+                    </td>
+                </tr>
+                <% }); %>
+                </tbody>
+            </table>
+            <% } %>
+        </div>
+    </main>
+</div>
+<script>
+function unsub(id) {
+    if (!confirm('Unsubscribe this email?')) return;
+    fetch('/admin/newsletter/' + id, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-Token': '<%= csrfToken %>'
+        }
+    })
+    .then(function(r) { if (r.ok) location.reload(); });
+}
+</script>
+</body>
+</html>

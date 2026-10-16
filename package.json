@@ -1,0 +1,23 @@
+{
+  "name": "cybersec-crm",
+  "version": "1.0.0",
+  "description": "Cybersecurity landing page with full CRM backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node database/seed.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.7.1",
+    "express-session": "^1.18.1",
+    "googleapis": "^174.0.1",
+    "helmet": "^8.0.0",
+    "imapflow": "^1.7.0",
+    "mailparser": "^3.9.15"
+  }
+}

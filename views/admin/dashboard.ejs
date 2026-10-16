@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard — CyberSec Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Space+Grotesk:wght@300;400;500;600;700&display=block" rel="stylesheet">
+    <style>
+        @font-face{font-family:'SG';src:local('Space Grotesk');font-display:block}
+        @font-face{font-family:'JB';src:local('JetBrains Mono');font-display:block}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{min-height:100%;background:#0a0a0a}
+        body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;color:#fff;font-family:'SG','Space Grotesk',sans-serif}
+        a{color:inherit;text-decoration:none}
+        :root{--red:#c81b1c;--ink:#fff;--sub:#e6e6e6;--lab:#949494;--bg:#0a0a0a;--card:#111;--border:rgba(255,255,255,.08)}
+
+        /* ── Shell ── */
+        .shell{display:flex;min-height:100vh}
+
+        /* ── Sidebar ── */
+        .side{width:240px;background:#080808;border-right:1px solid var(--border);padding:28px 20px;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+        .side-logo{display:flex;align-items:center;gap:12px;margin-bottom:40px}
+        .side-logo svg{width:32px;height:32px}
+        .side-logo span{font-weight:700;font-size:16px;letter-spacing:-.4px}
+        .side-nav{display:flex;flex-direction:column;gap:4px}
+        .side-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);transition:all .2s;border-left:2px solid transparent}
+        .side-nav a:hover,.side-nav a.active{color:var(--ink);background:rgba(255,255,255,.04);border-left-color:var(--red)}
+        .side-nav a.active{color:var(--red)}
+        .side-nav .sep{height:1px;background:var(--border);margin:16px 0}
+        .side-bottom{margin-top:auto;padding-top:20px;border-top:1px solid var(--border)}
+        .side-user{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:12px}
+        .side-user strong{color:var(--ink);display:block;font-size:13px;margin-bottom:2px}
+        .logout-btn{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);background:none;border:1px solid var(--border);padding:8px 14px;cursor:pointer;transition:all .2s;border-radius:0;width:100%}
+        .logout-btn:hover{color:var(--red);border-color:var(--red)}
+
+        /* ── Main ── */
+        .main{flex:1;padding:32px 40px;overflow-x:auto}
+        .main h1{font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:8px}
+        .main .subtitle{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);margin-bottom:32px}
+
+        /* ── Stat cards ── */
+        .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:40px}
+        .kpi{background:var(--card);border:1px solid var(--border);padding:24px;position:relative;overflow:hidden}
+        .kpi::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:var(--red);opacity:.6}
+        .kpi-label{font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--lab);margin-bottom:10px}
+        .kpi-value{font-family:'JB','JetBrains Mono',monospace;font-size:32px;font-weight:480;color:var(--ink)}
+        .kpi-note{font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);margin-top:6px}
+
+        /* Site stats */
+        .site-stats{display:flex;gap:16px;margin-bottom:40px;flex-wrap:wrap}
+        .sstat{background:var(--card);border:1px solid var(--border);padding:20px 24px;min-width:160px}
+        .sstat-val{font-family:'JB','JetBrains Mono',monospace;font-size:24px;font-weight:480;color:var(--red)}
+        .sstat-lab{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-top:4px}
+
+        /* ── Table ── */
+        .tbl-wrap{background:var(--card);border:1px solid var(--border);overflow-x:auto}
+        .tbl-head{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+        .tbl-head h2{font-size:18px;font-weight:600;letter-spacing:-.4px}
+        .tbl-head a{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--red);transition:opacity .2s}
+        .tbl-head a:hover{opacity:.7}
+        table{width:100%;border-collapse:collapse}
+        th{font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);text-align:left;padding:12px 24px;border-bottom:1px solid var(--border);font-weight:400}
+        td{padding:14px 24px;border-bottom:1px solid var(--border);font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--sub)}
+        tr:last-child td{border-bottom:none}
+        .badge{display:inline-block;padding:4px 10px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-family:'JB','JetBrains Mono',monospace}
+        .badge-new{background:rgba(200,27,28,.15);color:#ef4444}
+        .badge-contacted{background:rgba(59,130,246,.15);color:#3b82f6}
+        .badge-qualified{background:rgba(34,197,94,.15);color:#22c55e}
+        .badge-closed{background:rgba(148,148,148,.15);color:var(--lab)}
+        .empty{padding:40px;text-align:center;font-family:'JB','JetBrains Mono',monospace;font-size:14px;color:var(--lab)}
+
+        @media(max-width:768px){
+            .shell{flex-direction:column}
+            .side{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:16px;align-items:center}
+            .side-logo{margin-bottom:0;margin-right:auto}
+            .side-nav{flex-direction:row;width:100%;margin-top:12px}
+            .side-nav a{padding:8px 10px;font-size:12px;border-left:none;border-bottom:2px solid transparent}
+            .side-nav a:hover,.side-nav a.active{border-left:none;border-bottom-color:var(--red)}
+            .side-nav .sep{display:none}
+            .side-bottom{margin-top:0;border-top:none;padding-top:0}
+            .main{padding:20px 16px}
+        }
+        :focus-visible{outline:2px solid #fff;outline-offset:3px}
+    </style>
+</head>
+<body>
+<div class="shell">
+    <aside class="side">
+        <a href="/" class="side-logo">
+            <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g stroke="#fff" stroke-width="3" stroke-linecap="butt"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(90,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(180,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(270,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+            </svg>
+            <span>CyberSec</span>
+        </a>
+        <nav class="side-nav">
+            <a href="/admin" class="<%= path === '/admin' ? 'active' : '' %>">◆ Dashboard</a>
+            <a href="/admin/leads" class="<%= path === '/admin/leads' ? 'active' : '' %>">◆ Leads</a>
+            <a href="/admin/newsletter" class="<%= path === '/admin/newsletter' ? 'active' : '' %>">◆ Newsletter</a>
+            <a href="/admin/email-scanner" class="<%= path === '/admin/email-scanner' ? 'active' : '' %>">◆ Email Scanner</a>
+            <div class="sep"></div>
+            <a href="/admin/settings" class="<%= path === '/admin/settings' ? 'active' : '' %>">◆ Settings</a>
+            <a href="/" target="_blank">◆ View Site</a>
+        </nav>
+        <div class="side-bottom">
+            <div class="side-user">
+                <strong><%= user.username %></strong>
+                <%= user.role %>
+            </div>
+            <form action="/auth/logout" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="logout-btn">Sign out</button>
+            </form>
+        </div>
+    </aside>
+    <main class="main">
+        <h1>Dashboard</h1>
+        <p class="subtitle">Overview of your cybersecurity CRM</p>
+
+        <div class="cards">
+            <div class="kpi">
+                <div class="kpi-label">Total Leads</div>
+                <div class="kpi-value"><%= totalLeads %></div>
+                <div class="kpi-note"><%= newLeads %> new this week</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">New</div>
+                <div class="kpi-value"><%= statusMap.new || 0 %></div>
+                <div class="kpi-note">Awaiting contact</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Qualified</div>
+                <div class="kpi-value"><%= (statusMap.qualified || 0) + (statusMap.contacted || 0) %></div>
+                <div class="kpi-note">In pipeline</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Newsletter</div>
+                <div class="kpi-value"><%= totalSubscribers %></div>
+                <div class="kpi-note">Active subscribers</div>
+            </div>
+        </div>
+
+        <div class="site-stats">
+            <% stats.forEach(function(s) { %>
+            <div class="sstat">
+                <div class="sstat-val"><%= s.stat_value %></div>
+                <div class="sstat-lab"><%= s.stat_label %> (live on site)</div>
+            </div>
+            <% }); %>
+        </div>
+
+        <div class="tbl-wrap">
+            <div class="tbl-head">
+                <h2>Recent Leads</h2>
+                <a href="/admin/leads">View all →</a>
+            </div>
+            <% if (recentLeads.length === 0) { %>
+            <div class="empty">No leads yet. They'll appear here when someone submits the contact form.</div>
+            <% } else { %>
+            <table>
+                <thead>
+                    <tr><th>Name</th><th>Email</th><th>Source</th><th>Status</th><th>Date</th></tr>
+                </thead>
+                <tbody>
+                    <% recentLeads.forEach(function(lead) { %>
+                    <tr>
+                        <td style="color:var(--ink)"><%= lead.name %></td>
+                        <td><%= lead.email %></td>
+                        <td><%= lead.source %></td>
+                        <td><span class="badge badge-<%= lead.status %>"><%= lead.status %></span></td>
+                        <td><%= new Date(lead.created_at).toLocaleDateString() %></td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            <% } %>
+        </div>
+    </main>
+</div>
+</body>
+</html>

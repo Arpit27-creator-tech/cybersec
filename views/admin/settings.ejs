@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Settings — CyberSec Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Space+Grotesk:wght@300;400;500;600;700&display=block" rel="stylesheet">
+    <style>
+        @font-face{font-family:'SG';src:local('Space Grotesk');font-display:block}
+        @font-face{font-family:'JB';src:local('JetBrains Mono');font-display:block}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{min-height:100%;background:#0a0a0a}
+        body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;color:#fff;font-family:'SG','Space Grotesk',sans-serif}
+        a{color:inherit;text-decoration:none}
+        :root{--red:#c81b1c;--ink:#fff;--sub:#e6e6e6;--lab:#949494;--card:#111;--border:rgba(255,255,255,.08)}
+        .shell{display:flex;min-height:100vh}
+        .side{width:240px;background:#080808;border-right:1px solid var(--border);padding:28px 20px;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+        .side-logo{display:flex;align-items:center;gap:12px;margin-bottom:40px}
+        .side-logo svg{width:32px;height:32px}
+        .side-logo span{font-weight:700;font-size:16px;letter-spacing:-.4px}
+        .side-nav{display:flex;flex-direction:column;gap:4px}
+        .side-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);transition:all .2s;border-left:2px solid transparent}
+        .side-nav a:hover,.side-nav a.active{color:var(--ink);background:rgba(255,255,255,.04);border-left-color:var(--red)}
+        .side-nav a.active{color:var(--red)}
+        .side-nav .sep{height:1px;background:var(--border);margin:16px 0}
+        .side-bottom{margin-top:auto;padding-top:20px;border-top:1px solid var(--border)}
+        .side-user{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:12px}
+        .side-user strong{color:var(--ink);display:block;font-size:13px;margin-bottom:2px}
+        .logout-btn{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);background:none;border:1px solid var(--border);padding:8px 14px;cursor:pointer;transition:all .2s;border-radius:0;width:100%}
+        .logout-btn:hover{color:var(--red);border-color:var(--red)}
+        .main{flex:1;padding:32px 40px;max-width:960px}
+        .main h1{font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:8px}
+        .main .subtitle{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);margin-bottom:32px}
+
+        .section-box{background:var(--card);border:1px solid var(--border);padding:28px;margin-bottom:32px}
+        .section-box h2{font-size:18px;font-weight:600;letter-spacing:-.4px;margin-bottom:8px}
+        .section-box p.sec-desc{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);margin-bottom:24px}
+
+        /* Stat edit grid */
+        .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+        .stat-item{background:rgba(255,255,255,.02);border:1px solid var(--border);padding:20px}
+        .stat-item .key-tag{font-family:'JB','JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--red);margin-bottom:12px}
+        
+        .field{margin-bottom:16px}
+        .field label{display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px}
+        .field input{
+            width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);
+            color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:14px;
+            padding:10px 14px;outline:none;transition:border-color .2s;border-radius:0;
+        }
+        .field input:focus{border-color:var(--red)}
+
+        .save-btn{
+            display:inline-flex;align-items:center;gap:8px;
+            background:var(--red);color:#fff;border:none;cursor:pointer;
+            padding:10px 18px;font-family:'SG','Space Grotesk',sans-serif;font-weight:500;font-size:14px;
+            border-radius:0;transition:background .2s;
+        }
+        .save-btn:hover{background:#b01617}
+
+        .status-msg{font-family:'JB','JetBrains Mono',monospace;font-size:12px;margin-top:8px;display:none}
+        .status-msg.success{color:#22c55e;display:block}
+        .status-msg.error{color:#ef4444;display:block}
+
+        /* Alerts */
+        .alert{padding:12px 16px;margin-bottom:24px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;border-left:3px solid}
+        .alert-success{background:rgba(34,197,94,.08);color:#22c55e;border-color:#22c55e}
+        .alert-error{background:rgba(200,27,28,.08);color:#ef4444;border-color:#ef4444}
+
+        .user-info{display:flex;gap:24px;margin-bottom:20px;font-family:'JB','JetBrains Mono',monospace;font-size:13px}
+        .user-info div{color:var(--lab)}
+        .user-info div strong{color:var(--ink);display:block;font-size:14px;margin-top:2px}
+
+        @media(max-width:768px){
+            .shell{flex-direction:column}
+            .side{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:16px;align-items:center}
+            .side-logo{margin-bottom:0;margin-right:auto}
+            .side-nav{flex-direction:row;width:100%;margin-top:12px}
+            .side-nav a{padding:8px 10px;font-size:12px;border-left:none;border-bottom:2px solid transparent}
+            .side-nav a:hover,.side-nav a.active{border-left:none;border-bottom-color:var(--red)}
+            .side-nav .sep{display:none}
+            .side-bottom{margin-top:0;border-top:none;padding-top:0}
+            .main{padding:20px 16px}
+        }
+        :focus-visible{outline:2px solid #fff;outline-offset:3px}
+    </style>
+</head>
+<body>
+<div class="shell">
+    <aside class="side">
+        <a href="/" class="side-logo">
+            <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg"><g stroke="#fff" stroke-width="3" stroke-linecap="butt"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(90,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(180,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(270,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g></svg>
+            <span>CyberSec</span>
+        </a>
+        <nav class="side-nav">
+            <a href="/admin">◆ Dashboard</a>
+            <a href="/admin/leads">◆ Leads</a>
+            <a href="/admin/newsletter">◆ Newsletter</a>
+            <a href="/admin/email-scanner">◆ Email Scanner</a>
+            <div class="sep"></div>
+            <a href="/admin/settings" class="active">◆ Settings</a>
+            <a href="/" target="_blank">◆ View Site</a>
+        </nav>
+        <div class="side-bottom">
+            <div class="side-user"><strong><%= user.username %></strong><%= user.role %></div>
+            <form action="/auth/logout" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="logout-btn">Sign out</button></form>
+        </div>
+    </aside>
+    <main class="main">
+        <h1>Settings</h1>
+        <p class="subtitle">Manage site statistics and administrator credentials</p>
+
+        <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+        <% } %>
+        <% if (errors && errors.length) { %>
+        <div class="alert alert-error"><%= errors.join('. ') %></div>
+        <% } %>
+
+        <!-- Live Site Statistics -->
+        <div class="section-box">
+            <h2>Live Site Statistics</h2>
+            <p class="sec-desc">These values update dynamically on the landing page hero footer.</p>
+
+            <div class="stat-grid">
+                <% stats.forEach(function(stat) { %>
+                <div class="stat-item" id="stat-card-<%= stat.id %>">
+                    <div class="key-tag">Stat #<%= stat.display_order %>: <%= stat.stat_key %></div>
+                    <div class="field">
+                        <label for="val-<%= stat.id %>">Display Value</label>
+                        <input type="text" id="val-<%= stat.id %>" value="<%= stat.stat_value %>" placeholder="e.g. 300+">
+                    </div>
+                    <div class="field">
+                        <label for="lab-<%= stat.id %>">Display Label</label>
+                        <input type="text" id="lab-<%= stat.id %>" value="<%= stat.stat_label %>" placeholder="e.g. Clients">
+                    </div>
+                    <button class="save-btn" onclick="saveStat(<%= stat.id %>)">Save Stat</button>
+                    <div class="status-msg" id="msg-<%= stat.id %>"></div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+
+        <!-- Account Settings -->
+        <div class="section-box">
+            <h2>Account Security</h2>
+            <p class="sec-desc">Update your administrator password.</p>
+
+            <div class="user-info">
+                <div>Username strong: <strong><%= adminUser?.username || user.username %></strong></div>
+                <div>Email: <strong><%= adminUser?.email || 'admin@cybersec.local' %></strong></div>
+            </div>
+
+            <form action="/admin/change-password" method="POST" style="max-width:400px">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="field">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" name="currentPassword" required>
+                </div>
+                <div class="field">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword" placeholder="Min 8 characters" required minlength="8">
+                </div>
+                <div class="field">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <button type="submit" class="save-btn" style="margin-top:8px">Update Password</button>
+            </form>
+        </div>
+    </main>
+</div>
+
+<script>
+function saveStat(id) {
+    var val = document.getElementById('val-' + id).value;
+    var lab = document.getElementById('lab-' + id).value;
+    var msg = document.getElementById('msg-' + id);
+    msg.className = 'status-msg';
+
+    fetch('/admin/stats/' + id, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<%= csrfToken %>'
+        },
+        body: JSON.stringify({ stat_value: val, stat_label: lab })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            msg.textContent = '✓ Saved and updated live on landing page!';
+            msg.className = 'status-msg success';
+            setTimeout(function(){ msg.style.display = 'none'; }, 3000);
+        } else {
+            msg.textContent = data.error || 'Failed to save';
+            msg.className = 'status-msg error';
+        }
+    })
+    .catch(function() {
+        msg.textContent = 'Network error saving stat';
+        msg.className = 'status-msg error';
+    });
+}
+</script>
+</body>
+</html>

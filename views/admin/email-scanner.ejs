@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Email Threat Scanner — CyberSec Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Space+Grotesk:wght@300;400;500;600;700&display=block" rel="stylesheet">
+    <style>
+        @font-face{font-family:'SG';src:local('Space Grotesk');font-display:block}
+        @font-face{font-family:'JB';src:local('JetBrains Mono');font-display:block}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{min-height:100%;background:#0a0a0a}
+        body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;color:#fff;font-family:'SG','Space Grotesk',sans-serif}
+        a{color:inherit;text-decoration:none}
+        :root{--red:#c81b1c;--ink:#fff;--sub:#e6e6e6;--lab:#949494;--card:#111;--border:rgba(255,255,255,.08);--critical:#ef4444;--high:#f97316;--medium:#eab308;--safe:#22c55e}
+        
+        .shell{display:flex;min-height:100vh}
+        .side{width:240px;background:#080808;border-right:1px solid var(--border);padding:28px 20px;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+        .side-logo{display:flex;align-items:center;gap:12px;margin-bottom:40px}
+        .side-logo svg{width:32px;height:32px}
+        .side-logo span{font-weight:700;font-size:16px;letter-spacing:-.4px}
+        .side-nav{display:flex;flex-direction:column;gap:4px}
+        .side-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);transition:all .2s;border-left:2px solid transparent}
+        .side-nav a:hover,.side-nav a.active{color:var(--ink);background:rgba(255,255,255,.04);border-left-color:var(--red)}
+        .side-nav a.active{color:var(--red)}
+        .side-nav .sep{height:1px;background:var(--border);margin:16px 0}
+        .side-bottom{margin-top:auto;padding-top:20px;border-top:1px solid var(--border)}
+        .side-user{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:12px}
+        .side-user strong{color:var(--ink);display:block;font-size:13px;margin-bottom:2px}
+        .logout-btn{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);background:none;border:1px solid var(--border);padding:8px 14px;cursor:pointer;transition:all .2s;border-radius:0;width:100%}
+        .logout-btn:hover{color:var(--red);border-color:var(--red)}
+
+        .main{flex:1;padding:32px 40px;overflow-x:auto}
+        .header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:20px;flex-wrap:wrap}
+        .header-title h1{font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:6px}
+        .header-title .subtitle{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab)}
+
+        /* Connect Banner */
+        .conn-box{background:var(--card);border:1px solid var(--border);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+        .conn-info{display:flex;align-items:center;gap:14px}
+        .conn-dot{width:10px;height:10px;border-radius:50%;background:var(--safe);box-shadow:0 0 10px var(--safe)}
+        .conn-dot.disconnected{background:var(--lab);box-shadow:none}
+        .conn-title{font-size:15px;font-weight:600}
+        .conn-sub{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-top:3px}
+        .conn-actions{display:flex;gap:10px;align-items:center}
+        
+        .btn-action{
+            display:inline-flex;align-items:center;gap:8px;
+            background:var(--red);color:#fff;border:none;cursor:pointer;
+            padding:10px 18px;font-family:'SG','Space Grotesk',sans-serif;font-weight:500;font-size:14px;
+            border-radius:0;transition:all .2s;
+        }
+        .btn-action:hover{background:#b01617}
+        .btn-secondary{
+            background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--sub);
+        }
+        .btn-secondary:hover{background:rgba(255,255,255,.12);color:#fff}
+        .btn-danger{background:none;border:1px solid rgba(239,68,68,.3);color:var(--critical)}
+        .btn-danger:hover{background:rgba(239,68,68,.15);border-color:var(--critical)}
+
+        /* KPI Radar Grid */
+        .radar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+        .kpi{background:var(--card);border:1px solid var(--border);padding:20px 24px;position:relative}
+        .kpi::before{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:var(--border)}
+        .kpi.risk-kpi::before{background:var(--critical)}
+        .kpi.phish-kpi::before{background:var(--critical)}
+        .kpi.leak-kpi::before{background:var(--high)}
+        .kpi.safe-kpi::before{background:var(--safe)}
+        .kpi-lbl{font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:8px}
+        .kpi-val{font-family:'JB','JetBrains Mono',monospace;font-size:28px;font-weight:480;color:var(--ink)}
+        .kpi-sub{font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);margin-top:4px}
+
+        /* Toolbar */
+        .toolbar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+        .toolbar input[type="text"]{background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none;width:280px;border-radius:0}
+        .toolbar input:focus{border-color:var(--red)}
+        .filter-pills{display:flex;gap:8px;flex-wrap:wrap}
+        .pill{font-family:'JB','JetBrains Mono',monospace;font-size:12px;padding:8px 14px;border:1px solid var(--border);color:var(--lab);transition:all .2s}
+        .pill:hover{color:var(--ink);border-color:rgba(255,255,255,.3)}
+        .pill.active{color:var(--ink);background:rgba(200,27,28,.15);border-color:var(--red)}
+
+        /* Table */
+        .tbl-wrap{background:var(--card);border:1px solid var(--border);overflow-x:auto}
+        table{width:100%;border-collapse:collapse}
+        th{font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);text-align:left;padding:14px 20px;border-bottom:1px solid var(--border);font-weight:400}
+        td{padding:16px 20px;border-bottom:1px solid var(--border);font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--sub);vertical-align:top}
+        tr:last-child td{border-bottom:none}
+        tr:hover td{background:rgba(255,255,255,.01)}
+        
+        .sender-box .sname{color:var(--ink);font-weight:500;font-size:13px}
+        .sender-box .semail{color:var(--lab);font-size:11px;margin-top:2px}
+        .spoof-flag{display:inline-block;background:rgba(239,68,68,.2);color:#ef4444;font-size:10px;padding:2px 6px;margin-top:4px}
+        
+        .subj-box .subj{color:var(--ink);font-weight:500;margin-bottom:6px;max-width:340px;word-break:break-word}
+        .subj-box .ai-summary{font-size:11px;color:var(--lab);line-height:1.4;background:rgba(255,255,255,.03);padding:8px 10px;border-left:2px solid var(--red);max-width:380px}
+        
+        .threat-badge{display:inline-block;padding:5px 10px;font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;font-family:'JB','JetBrains Mono',monospace}
+        .threat-critical{background:rgba(239,68,68,.18);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+        .threat-high{background:rgba(249,115,22,.18);color:#f97316;border:1px solid rgba(249,115,22,.3)}
+        .threat-medium{background:rgba(234,179,8,.18);color:#eab308;border:1px solid rgba(234,179,8,.3)}
+        .threat-low{background:rgba(59,130,246,.18);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
+        .threat-safe{background:rgba(34,197,94,.18);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+
+        .flags-tag{display:inline-block;font-size:11px;color:var(--lab);background:rgba(255,255,255,.04);padding:4px 8px;border:1px solid var(--border)}
+        
+        .inspect-btn{background:none;border:1px solid var(--border);color:var(--sub);font-family:'JB','JetBrains Mono',monospace;font-size:11px;padding:8px 12px;cursor:pointer;border-radius:0;transition:all .2s;white-space:nowrap}
+        .inspect-btn:hover{color:var(--ink);border-color:var(--red);background:rgba(200,27,28,.08)}
+
+        .empty{padding:48px;text-align:center;font-family:'JB','JetBrains Mono',monospace;font-size:14px;color:var(--lab)}
+
+        /* Modal */
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:999;padding:20px}
+        .modal-overlay.active{display:flex}
+        .modal-card{background:#0e0e0e;border:1px solid var(--border);width:100%;max-width:760px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.8)}
+        .modal-header{padding:20px 28px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+        .modal-header h3{font-size:18px;font-weight:600;letter-spacing:-.4px}
+        .modal-close{background:none;border:none;color:var(--lab);font-size:22px;cursor:pointer;padding:0}
+        .modal-close:hover{color:#fff}
+        .modal-body{padding:28px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:20px}
+        
+        .m-section{background:rgba(255,255,255,.02);border:1px solid var(--border);padding:18px}
+        .m-sec-title{font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+        .m-text{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--sub);line-height:1.6}
+        
+        .m-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+        .m-list li{font-family:'JB','JetBrains Mono',monospace;font-size:12px;padding:8px 12px;background:rgba(255,255,255,.03);border-left:2px solid var(--border)}
+        .m-list li.warn{border-left-color:var(--critical);color:#fca5a5}
+        .m-list li.alert{border-left-color:var(--high);color:#fdba74}
+        .m-list li.safe{border-left-color:var(--safe);color:#86efac}
+
+        .raw-body{max-height:140px;overflow-y:auto;background:#000;border:1px solid var(--border);padding:12px;font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:#aaa;white-space:pre-wrap;word-break:break-all}
+
+        /* Modal Tabs & Forensic Layout */
+        .modal-card{background:#0e0e0e;border:1px solid var(--border);width:96%;max-width:960px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.9)}
+        .m-tabs{display:flex;gap:4px;padding:0 24px;border-bottom:1px solid var(--border);background:#09090b;overflow-x:auto}
+        .m-tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--lab);font-family:'JB','JetBrains Mono',monospace;font-size:12px;padding:12px 16px;cursor:pointer;transition:all .2s;white-space:nowrap}
+        .m-tab-btn:hover{color:#fff}
+        .m-tab-btn.active{color:var(--red);border-bottom-color:var(--red);font-weight:600}
+        .m-tab-pane{display:none;flex-direction:column;gap:18px}
+        .m-tab-pane.active{display:flex}
+        .m-badge{display:inline-block;padding:2px 8px;font-size:11px;font-family:'JB','JetBrains Mono',monospace;font-weight:500}
+        .m-mitre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+        .m-mitre-item{background:rgba(255,255,255,.02);border:1px solid var(--border);border-left:3px solid var(--red);padding:14px}
+        .m-sop-step{display:flex;gap:14px;padding:14px;background:rgba(255,255,255,.02);border:1px solid var(--border)}
+        .m-sop-num{width:24px;height:24px;border-radius:50%;background:rgba(200,27,28,.15);color:var(--red);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+        .m-kv-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-family:'JB','JetBrains Mono',monospace;font-size:12px}
+        .m-kv-row:last-child{border-bottom:none}
+        .m-kv-k{color:var(--lab)}
+        .m-kv-v{color:#fff;max-width:65%;text-align:right;word-break:break-all}
+
+        /* Alerts */
+        .alert{padding:12px 18px;margin-bottom:20px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;border-left:3px solid}
+        .alert-success{background:rgba(34,197,94,.08);color:#22c55e;border-color:#22c55e}
+        .alert-error{background:rgba(200,27,28,.08);color:#ef4444;border-color:#ef4444}
+        @keyframes spin{100%{transform:rotate(360deg)}}
+
+        @media(max-width:768px){
+            .shell{flex-direction:column}
+            .side{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:16px;align-items:center}
+            .side-logo{margin-bottom:0;margin-right:auto}
+            .side-nav{flex-direction:row;width:100%;margin-top:12px;overflow-x:auto}
+            .side-nav a{padding:8px 10px;font-size:12px;border-left:none;border-bottom:2px solid transparent}
+            .side-nav a:hover,.side-nav a.active{border-left:none;border-bottom-color:var(--red)}
+            .side-nav .sep{display:none}
+            .side-bottom{margin-top:0;border-top:none;padding-top:0}
+            .main{padding:20px 16px}
+            .toolbar input[type="text"]{width:100%}
+        }
+        :focus-visible{outline:2px solid #fff;outline-offset:3px}
+    </style>
+</head>
+<body>
+<div class="shell">
+    <aside class="side">
+        <a href="/" class="side-logo">
+            <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg"><g stroke="#fff" stroke-width="3" stroke-linecap="butt"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(90,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(180,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(270,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g></svg>
+            <span>CyberSec</span>
+        </a>
+        <nav class="side-nav">
+            <a href="/admin">◆ Dashboard</a>
+            <a href="/admin/leads">◆ Leads</a>
+            <a href="/admin/newsletter">◆ Newsletter</a>
+            <a href="/admin/email-scanner" class="active">◆ Email Scanner</a>
+            <div class="sep"></div>
+            <a href="/admin/settings">◆ Settings</a>
+            <a href="/" target="_blank">◆ View Site</a>
+        </nav>
+        <div class="side-bottom">
+            <div class="side-user"><strong><%= user.username %></strong><%= user.role %></div>
+            <form action="/auth/logout" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="logout-btn">Sign out</button></form>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="header-row">
+            <div class="header-title">
+                <h1>Email Threat Radar</h1>
+                <p class="subtitle">Real-time Phishing, Malicious Link & Secret Leak Detector with AI Digest</p>
+            </div>
+            <div style="display:flex;gap:10px">
+                <button class="btn-action btn-secondary" onclick="triggerDemoScan()">
+                    <span>⚡ Load Threat Simulation</span>
+                </button>
+                <% if (scans.length > 0) { %>
+                <form action="/admin/email-scanner/clear" method="POST" onsubmit="return confirm('Clear all scanned email reports?')">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn-action btn-secondary" style="color:var(--lab)">Clear Scans</button>
+                </form>
+                <% } %>
+            </div>
+        </div>
+
+        <% if (locals.scannedCount !== undefined && locals.scannedCount !== null) { %>
+        <div class="alert alert-success">✓ Successfully scanned <%= scannedCount %> emails from Gmail inbox! Threat radar updated.</div>
+        <% } %>
+        <% if (connectedSuccess) { %>
+        <div class="alert alert-success">✓ Gmail account linked successfully! Inbox scanned for threats.</div>
+        <% } %>
+        <% if (oauthError) { %>
+        <div class="alert alert-error"><%= oauthError === 'missing_credentials' ? 'Google OAuth Notice: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not set in .env. You can test immediately using the "Load Threat Simulation" button below or add your Google Cloud credentials to .env.' : oauthError %></div>
+        <% } %>
+
+        <!-- Connection Banner -->
+        <div class="conn-box">
+            <div class="conn-info">
+                <div class="conn-dot <%= account ? '' : 'disconnected' %>"></div>
+                <div>
+                    <div class="conn-title"><%= account ? ('Linked Account: ' + account.email + (account.refresh_token === 'imap' ? ' (via App Password)' : ' (via OAuth 2.0)')) : 'Connect Gmail to Scan Inbox' %></div>
+                    <div class="conn-sub">
+                        <% if (account) { %>
+                            Connected &amp; ready. Last scanned: <%= account.last_scanned_at ? new Date(account.last_scanned_at).toLocaleString() : 'Never' %>
+                        <% } else { %>
+                            Choose your preferred connection method: 30-second App Password (fastest) or Google OAuth 2.0.
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            <div class="conn-actions">
+                <% if (account) { %>
+                    <button class="btn-action" id="scanLiveBtn" onclick="triggerLiveScan()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        Scan Gmail Now
+                    </button>
+                    <form action="/admin/email-scanner/disconnect" method="POST" onsubmit="return confirm('Disconnect this Gmail account?')">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn-action btn-danger">Disconnect</button>
+                    </form>
+                <% } else { %>
+                    <button type="button" class="btn-action" onclick="showConnectModal('app-pass')">
+                        <span>⚡ Connect with App Password</span>
+                    </button>
+                    <button type="button" class="btn-action btn-secondary" onclick="showConnectModal('oauth')">
+                        <span>🔑 Connect with OAuth 2.0</span>
+                    </button>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Connection Modal / Card -->
+        <div id="connectCard" style="background:var(--card);border:1px solid var(--border);padding:24px;margin-bottom:28px;<%= account ? 'display:none;' : 'display:block;' %>">
+            <!-- Tabs -->
+            <div style="display:flex;gap:12px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px;flex-wrap:wrap">
+                <button type="button" id="tabAppPassBtn" class="pill active" onclick="switchConnTab('app-pass')">⚡ Method 1: Gmail App Password</button>
+                <button type="button" id="tabOAuthBtn" class="pill" onclick="switchConnTab('oauth')">🔑 Method 2: Google OAuth 2.0</button>
+                <button type="button" id="tabPasteBtn" class="pill" onclick="switchConnTab('paste')">📝 Instant Paste &amp; Scan Email</button>
+            </div>
+
+            <!-- Tab 1: App Password (Fastest) -->
+            <div id="tabAppPassContent">
+                <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:20px;background:rgba(255,255,205,.02);padding:14px;border-left:2px solid var(--safe)">
+                    <div style="font-weight:bold;color:#fff;margin-bottom:6px">⚡ How to get a Google App Password (30 Seconds):</div>
+                    1. Ensure <strong>IMAP Access</strong> is enabled in your Gmail Settings (<a href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" style="color:var(--safe);text-decoration:underline">mail.google.com &gt; Forwarding and POP/IMAP &gt; Enable IMAP</a>).<br>
+                    2. Open <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--safe);text-decoration:underline">myaccount.google.com/apppasswords</a>.<br>
+                    3. Under <strong>App name</strong>, type <code style="background:#000;padding:2px 6px;color:#fff">CyberSec Scanner</code> and click <strong>Create</strong>.<br>
+                    4. Paste your Gmail and the 16-character code below and click <strong>Connect &amp; Scan Inbox</strong>.
+                </div>
+
+                <form action="/admin/email-scanner/connect-imap" method="POST" style="display:flex;flex-direction:column;gap:16px;max-width:580px">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div>
+                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Your Gmail Address</label>
+                        <input type="email" name="email" placeholder="yourname@gmail.com" required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
+                    </div>
+                    <div>
+                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">16-Character Google App Password</label>
+                        <input type="password" name="appPassword" placeholder="abcd efgh ijkl mnop" required minlength="16" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
+                    </div>
+                    <div style="display:flex;gap:12px;margin-top:6px">
+                        <button type="submit" class="btn-action" style="background:var(--safe);color:#000;font-weight:600">
+                            ✓ Connect &amp; Scan Inbox Now →
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tab 2: Google OAuth 2.0 -->
+            <div id="tabOAuthContent" style="display:none">
+                <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:20px;background:rgba(255,255,255,.02);padding:14px;border-left:2px solid var(--red)">
+                    <div style="font-weight:bold;color:var(--ink);margin-bottom:6px">Google Cloud OAuth 2.0 Setup:</div>
+                    1. Go to <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--red);text-decoration:underline">Google Cloud Console</a>.<br>
+                    2. In <strong>APIs &amp; Services &gt; Library</strong>, enable <strong>Gmail API</strong>.<br>
+                    3. In <strong>Credentials</strong>, create an <strong>OAuth client ID</strong> (Web application).<br>
+                    4. Add Authorized Redirect URI: <code style="background:#000;padding:2px 6px;color:#fff">http://localhost:3000/auth/google/callback</code><br>
+                    5. Paste your <strong>Client ID</strong> and <strong>Client Secret</strong> below:
+                </div>
+
+                <form action="/admin/email-scanner/config-oauth" method="POST" style="display:flex;flex-direction:column;gap:16px;max-width:580px">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div>
+                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Google Client ID</label>
+                        <input type="text" name="clientId" placeholder="1234567890-abc.apps.googleusercontent.com" required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
+                    </div>
+                    <div>
+                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Google Client Secret</label>
+                        <input type="password" name="clientSecret" placeholder="GOCSPX-..." required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
+                    </div>
+                    <div>
+                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Authorized Redirect URI</label>
+                        <input type="text" name="redirectUri" value="http://localhost:3000/auth/google/callback" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--lab);font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
+                    </div>
+                    <div style="display:flex;gap:12px;margin-top:6px">
+                        <button type="submit" class="btn-action">
+                            Save &amp; Connect with Google OAuth →
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tab 3: Direct Paste & Scan -->
+            <div id="tabPasteContent" style="display:none">
+                <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:20px;background:rgba(255,255,255,.02);padding:14px;border-left:2px solid #3b82f6">
+                    <div style="font-weight:bold;color:#fff;margin-bottom:6px">📝 Instant Threat &amp; Phishing Scanner (Zero Credentials Needed):</div>
+                    Paste the subject, sender, and body text of any suspicious email directly below to analyze phishing triggers, scan malicious links, detect leaked secrets, and generate an instant AI summary.
+                </div>
+
+                <form onsubmit="handleDirectScan(event)" style="display:flex;flex-direction:column;gap:16px;max-width:680px">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div>
+                            <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Sender Email / Display Name</label>
+                            <input type="text" id="pSender" placeholder="security@paypal-verify.xyz" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
+                        </div>
+                        <div>
+                            <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Subject Line</label>
+                            <input type="text" id="pSubject" placeholder="Urgent: Verify your credentials" required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Email Body Text / Content</label>
+                        <textarea id="pBody" rows="5" placeholder="Paste the email content here to scan for phishing links, credential leaks, and social engineering lures..." required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none;resize:vertical"></textarea>
+                    </div>
+                    <div style="display:flex;gap:12px">
+                        <button type="submit" class="btn-action" id="scanTextBtn" style="background:#3b82f6;color:#fff">
+                            ⚡ Analyze Threat Report Now
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- KPI Radar Grid -->
+        <div class="radar-grid">
+            <div class="kpi risk-kpi">
+                <div class="kpi-lbl">Inbox Threat Index</div>
+                <div class="kpi-val" style="color:<%= metrics.overallRiskScore > 50 ? 'var(--critical)' : (metrics.overallRiskScore > 20 ? 'var(--high)' : 'var(--safe)') %>">
+                    <%= metrics.overallRiskScore %> / 100
+                </div>
+                <div class="kpi-sub"><%= metrics.overallRiskScore > 50 ? 'High Risk Level' : (metrics.overallRiskScore > 20 ? 'Moderate Vigilance' : 'Healthy Inbox') %></div>
+            </div>
+            <div class="kpi phish-kpi">
+                <div class="kpi-lbl">Phishing Attacks</div>
+                <div class="kpi-val" style="color:var(--critical)"><%= metrics.phishingCount %></div>
+                <div class="kpi-sub">Lures & Credential Harvesters</div>
+            </div>
+            <div class="kpi leak-kpi">
+                <div class="kpi-lbl">Data Leaks</div>
+                <div class="kpi-val" style="color:var(--high)"><%= metrics.leakCount %></div>
+                <div class="kpi-sub">Exposed Keys & Passwords</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-lbl">Critical / High</div>
+                <div class="kpi-val" style="color:var(--high)"><%= metrics.criticalCount + metrics.highCount %></div>
+                <div class="kpi-sub">Immediate Action Items</div>
+            </div>
+            <div class="kpi safe-kpi">
+                <div class="kpi-lbl">Verified Clean</div>
+                <div class="kpi-val" style="color:var(--safe)"><%= metrics.safeCount %></div>
+                <div class="kpi-sub"><%= metrics.totalScanned %> Total Analyzed</div>
+            </div>
+        </div>
+
+        <!-- Filter Toolbar -->
+        <div class="toolbar">
+            <form method="GET" action="/admin/email-scanner" style="display:flex;gap:12px;flex-wrap:wrap">
+                <input type="hidden" name="filter" value="<%= threatFilter %>">
+                <input type="text" name="q" placeholder="Search sender, subject, keywords..." value="<%= searchQuery %>">
+                <button type="submit" style="display:none"></button>
+            </form>
+            <div class="filter-pills">
+                <a href="/admin/email-scanner?filter=all&q=<%= searchQuery %>" class="pill <%= threatFilter==='all'?'active':'' %>">All (<%= metrics.totalScanned %>)</a>
+                <a href="/admin/email-scanner?filter=critical&q=<%= searchQuery %>" class="pill <%= threatFilter==='critical'?'active':'' %>">Critical (<%= metrics.criticalCount %>)</a>
+                <a href="/admin/email-scanner?filter=phishing&q=<%= searchQuery %>" class="pill <%= threatFilter==='phishing'?'active':'' %>">Phishing (<%= metrics.phishingCount %>)</a>
+                <a href="/admin/email-scanner?filter=leaks&q=<%= searchQuery %>" class="pill <%= threatFilter==='leaks'?'active':'' %>">Leaks (<%= metrics.leakCount %>)</a>
+                <a href="/admin/email-scanner?filter=safe&q=<%= searchQuery %>" class="pill <%= threatFilter==='safe'?'active':'' %>">Safe (<%= metrics.safeCount %>)</a>
+            </div>
+        </div>
+
+        <!-- Email Scans Table -->
+        <div class="tbl-wrap">
+            <% if (scans.length === 0) { %>
+            <div class="empty">
+                <p>No scanned emails found for the selected filter.</p>
+                <p style="margin-top:12px">Click <button class="btn-action btn-secondary" style="padding:6px 12px;font-size:12px" onclick="triggerDemoScan()">Load Threat Simulation</button> to test with sample emails.</p>
+            </div>
+            <% } else { %>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Threat Level</th>
+                        <th>Sender</th>
+                        <th>Subject & AI Executive Summary</th>
+                        <th>Flags</th>
+                        <th>Date</th>
+                        <th>Report</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% scans.forEach(function(scan) { 
+                        var summaryObj = {};
+                        try { summaryObj = JSON.parse(scan.summary || '{}'); } catch(e) {}
+                        var phishingArr = [];
+                        try { phishingArr = JSON.parse(scan.phishing_reasons || '[]'); } catch(e) {}
+                        var authArr = [];
+                        try { authArr = JSON.parse(scan.auth_issues || '[]'); } catch(e) {}
+                        var leaksArr = [];
+                        try { leaksArr = JSON.parse(scan.leaked_secrets || '[]'); } catch(e) {}
+                    %>
+                    <tr>
+                        <td>
+                            <span class="threat-badge threat-<%= scan.threat_level %>">
+                                <%= scan.threat_level %> (<%= scan.threat_score %>)
+                            </span>
+                        </td>
+                        <td>
+                            <div class="sender-box">
+                                <div class="sname"><%= scan.sender_name || scan.sender %></div>
+                                <div class="semail"><%= scan.sender %></div>
+                                <% if (authArr.length > 0) { %>
+                                    <div class="spoof-flag">⚠️ Domain Spoof Risk</div>
+                                <% } %>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="subj-box">
+                                <div class="subj"><%= scan.subject %></div>
+                                <div class="ai-summary">
+                                    <strong>AI Digest [<%= summaryObj.intent || 'General' %>]:</strong> <%= summaryObj.overview || scan.snippet %>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="flags-tag">
+                                <%= phishingArr.length + leaksArr.length + authArr.length %> Flags
+                            </span>
+                        </td>
+                        <td style="white-space:nowrap"><%= new Date(scan.date || scan.scanned_at).toLocaleDateString() %></td>
+                        <td>
+                            <button class="inspect-btn" onclick="openThreatInspector(<%= scan.id %>)">Inspect Report →</button>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+            <% } %>
+        </div>
+    </main>
+</div>
+
+<!-- Forensic Threat Inspection Modal -->
+<div class="modal-overlay" id="threatModal">
+    <div class="modal-card">
+        <div class="modal-header" style="flex-wrap:wrap;gap:12px">
+            <div>
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+                    <span id="mCaseId" class="flags-tag" style="color:var(--red);border-color:var(--red)">INCIDENT REPORT</span>
+                    <span id="mThreatBadge" class="threat-badge"></span>
+                    <span id="mCvssBadge" class="flags-tag" style="color:#e4e4e7"></span>
+                </div>
+                <h3 id="mTitle" style="font-size:18px;font-weight:700;letter-spacing:-.4px;color:#fff"></h3>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <a id="mDossierLink" href="#" target="_blank" class="inspect-btn" style="color:#fff;border-color:rgba(255,255,255,.2)">
+                    🖨️ Full Dossier / PDF ↗
+                </a>
+                <button type="button" class="inspect-btn" onclick="copyModalBrief()">
+                    📋 Copy Brief
+                </button>
+                <button class="modal-close" onclick="closeThreatInspector()">✕</button>
+            </div>
+        </div>
+
+        <!-- Investigation Tabs -->
+        <div class="m-tabs">
+            <button type="button" class="m-tab-btn active" id="tabBtnOverview" onclick="switchModalTab('overview')">🛡️ Executive Briefing</button>
+            <button type="button" class="m-tab-btn" id="tabBtnIoc" onclick="switchModalTab('ioc')">🔍 Forensic IOCs (<span id="mIocCount">0</span>)</button>
+            <button type="button" class="m-tab-btn" id="tabBtnMitre" onclick="switchModalTab('mitre')">🎯 MITRE ATT&CK® (<span id="mMitreCount">0</span>)</button>
+            <button type="button" class="m-tab-btn" id="tabBtnPlaybook" onclick="switchModalTab('playbook')">📋 Containment SOP</button>
+            <button type="button" class="m-tab-btn" id="tabBtnRaw" onclick="switchModalTab('raw')">✉️ Decoded Artifacts</button>
+        </div>
+
+        <div class="modal-body">
+            <!-- Tab 1: Executive Overview -->
+            <div class="m-tab-pane active" id="paneOverview">
+                <div class="m-section">
+                    <div class="m-sec-title">⚠️ Attack Classification & Verdict</div>
+                    <div id="mVerdict" style="font-weight:700;font-size:14px;color:#fff;margin-bottom:6px"></div>
+                    <div id="mNarrative" class="m-text" style="color:var(--sub);line-height:1.6"></div>
+                </div>
+
+                <div class="m-section">
+                    <div class="m-sec-title">📨 Message Telemetry & Envelope Alignment</div>
+                    <div class="m-kv-row"><span class="m-kv-k">Claimed Sender:</span><span class="m-kv-v" id="mMetaSender"></span></div>
+                    <div class="m-kv-row"><span class="m-kv-k">Recipient Target:</span><span class="m-kv-v" id="mMetaRecipient"></span></div>
+                    <div class="m-kv-row"><span class="m-kv-k">Received Date:</span><span class="m-kv-v" id="mMetaDate"></span></div>
+                    <div class="m-kv-row"><span class="m-kv-k">Domain Spoofing Check:</span><span class="m-kv-v" id="mMetaSpoof"></span></div>
+                </div>
+
+                <div class="m-section">
+                    <div class="m-sec-title">💥 Enterprise Blast Radius Assessment</div>
+                    <div class="m-kv-row"><span class="m-kv-k">Target Scope:</span><span class="m-kv-v" id="mBlastScope"></span></div>
+                    <div class="m-kv-row"><span class="m-kv-k">Credential Exposure:</span><span class="m-kv-v" id="mBlastCreds"></span></div>
+                    <div class="m-kv-row"><span class="m-kv-k">Lateral Movement:</span><span class="m-kv-v" id="mBlastLateral"></span></div>
+                    <div class="m-kv-row"><span class="m-kv-k">Compliance Mandate:</span><span class="m-kv-v" id="mBlastCompliance"></span></div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Forensic IOCs -->
+            <div class="m-tab-pane" id="paneIoc">
+                <div class="m-section" id="mPhishingSec">
+                    <div class="m-sec-title">🎣 Social Engineering & Psychological Pretexting</div>
+                    <ul class="m-list" id="mPhishingList"></ul>
+                </div>
+
+                <div class="m-section" id="mLinksSec">
+                    <div class="m-sec-title">🔗 Malicious Link Infrastructure & Domains</div>
+                    <ul class="m-list" id="mLinksList"></ul>
+                </div>
+
+                <div class="m-section" id="mAttSec">
+                    <div class="m-sec-title">📎 Weaponized File Attachments</div>
+                    <ul class="m-list" id="mAttList"></ul>
+                </div>
+
+                <div class="m-section" id="mLeaksSec">
+                    <div class="m-sec-title">🔑 Exposed Secrets & API Tokens</div>
+                    <ul class="m-list" id="mLeaksList"></ul>
+                </div>
+
+                <div id="mCleanTelemetrySec" style="display:none" class="m-section">
+                    <div style="font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--safe)">
+                        ✓ Clean Telemetry: Zero malicious indicators, spoofed links, or exposed secrets detected.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: MITRE ATT&CK -->
+            <div class="m-tab-pane" id="paneMitre">
+                <div class="m-section">
+                    <div class="m-sec-title">🎯 MITRE ATT&CK® Enterprise Matrix Mapping</div>
+                    <p class="m-text" style="color:var(--lab);margin-bottom:14px">
+                        Adversary techniques mapped according to the MITRE ATT&CK knowledge base of cyber adversary behavior.
+                    </p>
+                    <div class="m-mitre-grid" id="mMitreGrid"></div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Containment SOP -->
+            <div class="m-tab-pane" id="panePlaybook">
+                <div class="m-section">
+                    <div class="m-sec-title">🛡️ SOC Containment Checklist & Incident Response SOP</div>
+                    <p class="m-text" style="color:var(--lab);margin-bottom:14px">
+                        Standard Operating Procedure for threat remediation, mailbox sanitization, and credential invalidation.
+                    </p>
+                    <div style="display:flex;flex-direction:column;gap:10px" id="mSopList"></div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Raw Decoded Message Artifact -->
+            <div class="m-tab-pane" id="paneRaw">
+                <div class="m-section">
+                    <div class="m-sec-title">✉️ Raw Decoded Message Payload Preview</div>
+                    <div class="raw-body" id="mBodyText" style="max-height:280px"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function triggerLiveScan() {
+    var btn = document.getElementById('scanLiveBtn');
+    if (!btn) return;
+    var originalContent = btn.innerHTML;
+    btn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Scanning Gmail...';
+    btn.disabled = true;
+
+    fetch('/admin/email-scanner/scan', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': '<%= csrfToken %>' }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            window.location.href = '/admin/email-scanner?scanned=' + encodeURIComponent(data.count || 0);
+        } else {
+            alert('Scan error: ' + (data.error || 'Failed to scan inbox'));
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+    })
+    .catch(function(err) {
+        alert('Network error during scan: ' + (err.message || 'Server timeout or connection failed'));
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    });
+}
+
+function triggerDemoScan() {
+    fetch('/admin/email-scanner/demo-scan', {
+        method: 'POST',
+        headers: { 'X-CSRF-Token': '<%= csrfToken %>' }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error generating demo scan');
+        }
+    });
+}
+
+var currentModalReport = null;
+
+function switchModalTab(tabName) {
+    var tabs = ['overview', 'ioc', 'mitre', 'playbook', 'raw'];
+    tabs.forEach(function(t) {
+        var btn = document.getElementById('tabBtn' + t.charAt(0).toUpperCase() + t.slice(1));
+        var pane = document.getElementById('pane' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) btn.classList.remove('active');
+        if (pane) pane.classList.remove('active');
+    });
+    var activeBtn = document.getElementById('tabBtn' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+    var activePane = document.getElementById('pane' + tabName.charAt(0).toUpperCase() + tabName.slice(1));
+    if (activeBtn) activeBtn.classList.add('active');
+    if (activePane) activePane.classList.add('active');
+}
+
+function openThreatInspector(id) {
+    switchModalTab('overview');
+
+    fetch('/admin/email-scanner/email/' + id)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var report = data.forensicReport || {};
+        currentModalReport = report;
+
+        // Header
+        document.getElementById('mCaseId').textContent = report.caseId || ('INCIDENT #' + data.id);
+        var tBadge = document.getElementById('mThreatBadge');
+        var lvl = (report.classification?.threatLevel || data.threat_level || 'safe');
+        var scr = (report.classification?.threatScore !== undefined ? report.classification.threatScore : data.threat_score);
+        tBadge.className = 'threat-badge threat-' + lvl;
+        tBadge.textContent = lvl.toUpperCase() + ' (' + scr + '/100)';
+        document.getElementById('mCvssBadge').textContent = 'CVSS: ' + (report.classification?.cvssScore || '0.0');
+        document.getElementById('mTitle').textContent = report.classification?.attackType || data.subject;
+
+        // Links
+        document.getElementById('mDossierLink').href = '/admin/email-scanner/report/' + id;
+
+        // Tab 1: Executive Overview
+        document.getElementById('mVerdict').textContent = report.executiveSummary?.verdict || data.summary?.verdict || 'Analysis Completed';
+        document.getElementById('mNarrative').textContent = report.executiveSummary?.technicalNarrative || report.executiveSummary?.overview || data.summary?.overview || data.body_text || '';
+        
+        document.getElementById('mMetaSender').textContent = (report.metadata?.senderName ? report.metadata.senderName + ' <' + report.metadata.sender + '>' : data.sender);
+        document.getElementById('mMetaRecipient').textContent = report.metadata?.recipient || data.recipient || 'Internal Recipient';
+        document.getElementById('mMetaDate').textContent = new Date(report.metadata?.timestamp || data.date).toLocaleString();
+        
+        var spoofEl = document.getElementById('mMetaSpoof');
+        var spoofVerdict = report.forensics?.senderAnalysis?.spoofVerdict || 'VALID / UNTAMPERED';
+        spoofEl.textContent = spoofVerdict;
+        spoofEl.style.color = spoofVerdict === 'VALID / UNTAMPERED' ? 'var(--safe)' : 'var(--critical)';
+
+        document.getElementById('mBlastScope').textContent = report.blastRadius?.scope || 'Workstation';
+        document.getElementById('mBlastCreds').textContent = report.blastRadius?.dataExposureRisk || 'None';
+        document.getElementById('mBlastLateral').textContent = report.blastRadius?.lateralMovementRisk || 'None';
+        document.getElementById('mBlastCompliance').textContent = report.blastRadius?.complianceImpact || 'Standard Logging';
+
+        // Tab 2: Forensic IOCs
+        var pList = document.getElementById('mPhishingList');
+        pList.innerHTML = '';
+        var psychTriggers = report.forensics?.psychologicalTriggers || [];
+        var allPhish = (data.phishing_reasons || []).concat(data.auth_issues || []);
+        if (psychTriggers.length > 0) {
+            document.getElementById('mPhishingSec').style.display = 'block';
+            psychTriggers.forEach(function(p) {
+                var li = document.createElement('li');
+                li.className = 'warn';
+                li.innerHTML = '<strong>' + p.intent + ':</strong> "' + p.context + '" <span style="color:var(--lab)">(' + p.tactic + ')</span>';
+                pList.appendChild(li);
+            });
+        } else if (allPhish.length > 0) {
+            document.getElementById('mPhishingSec').style.display = 'block';
+            allPhish.forEach(function(r) {
+                var li = document.createElement('li');
+                li.className = 'warn';
+                li.textContent = '⚠️ ' + r;
+                pList.appendChild(li);
+            });
+        } else {
+            document.getElementById('mPhishingSec').style.display = 'none';
+        }
+
+        var lList = document.getElementById('mLinksList');
+        lList.innerHTML = '';
+        var linksList = report.forensics?.linksAnalysis || data.malicious_links || [];
+        if (linksList.length > 0) {
+            document.getElementById('mLinksSec').style.display = 'block';
+            linksList.forEach(function(l) {
+                var li = document.createElement('li');
+                li.className = 'warn';
+                li.innerHTML = '🔗 <strong>' + (l.threatCategory || 'Suspicious URL') + ':</strong> <code style="word-break:break-all">' + l.url + '</code> (' + (l.tacticalRisk || l.reason) + ')';
+                lList.appendChild(li);
+            });
+        } else {
+            document.getElementById('mLinksSec').style.display = 'none';
+        }
+
+        var aList = document.getElementById('mAttList');
+        aList.innerHTML = '';
+        var attList = report.forensics?.attachmentsAnalysis || data.suspicious_attachments || [];
+        if (attList.length > 0) {
+            document.getElementById('mAttSec').style.display = 'block';
+            attList.forEach(function(a) {
+                var li = document.createElement('li');
+                li.className = 'warn';
+                li.innerHTML = '📎 <strong>' + (a.filename || 'Attachment') + '</strong> [' + (a.extension || '') + ']: ' + (a.payloadVector || a.risk || 'Dangerous file');
+                aList.appendChild(li);
+            });
+        } else {
+            document.getElementById('mAttSec').style.display = 'none';
+        }
+
+        var lkList = document.getElementById('mLeaksList');
+        lkList.innerHTML = '';
+        var leaksList = report.forensics?.dataLeaksAnalysis || data.leaked_secrets || [];
+        if (leaksList.length > 0) {
+            document.getElementById('mLeaksSec').style.display = 'block';
+            leaksList.forEach(function(s) {
+                var li = document.createElement('li');
+                li.className = 'alert';
+                li.innerHTML = '🔑 <strong>' + (s.secretType || s.type) + ':</strong> ' + (s.maskedSample || s.sample);
+                lkList.appendChild(li);
+            });
+        } else {
+            document.getElementById('mLeaksSec').style.display = 'none';
+        }
+
+        var totalIocs = linksList.length + attList.length + leaksList.length + psychTriggers.length;
+        document.getElementById('mIocCount').textContent = totalIocs;
+        document.getElementById('mCleanTelemetrySec').style.display = totalIocs === 0 ? 'block' : 'none';
+
+        // Tab 3: MITRE ATT&CK
+        var mitreGrid = document.getElementById('mMitreGrid');
+        mitreGrid.innerHTML = '';
+        var mitreTechs = report.mitreTechniques || [];
+        document.getElementById('mMitreCount').textContent = mitreTechs.length;
+        if (mitreTechs.length > 0) {
+            mitreTechs.forEach(function(m) {
+                var div = document.createElement('div');
+                div.className = 'm-mitre-item';
+                div.innerHTML = '<div style="font-family:\'JB\',monospace;font-size:11px;font-weight:700;color:var(--red)">' + m.id + '</div>' +
+                                '<div style="font-weight:600;font-size:13px;color:#fff;margin:3px 0">' + m.name + '</div>' +
+                                '<div style="font-family:\'JB\',monospace;font-size:10px;color:var(--lab);margin-bottom:6px">' + m.tactic + '</div>' +
+                                '<div style="font-size:11px;color:#d4d4d8;line-height:1.4">' + m.description + '</div>';
+                mitreGrid.appendChild(div);
+            });
+        } else {
+            mitreGrid.innerHTML = '<div style="font-family:\'JB\',monospace;font-size:12px;color:var(--safe)">No offensive MITRE ATT&CK techniques identified for this communication.</div>';
+        }
+
+        // Tab 4: SOC Containment SOP
+        var sopList = document.getElementById('mSopList');
+        sopList.innerHTML = '';
+        var sopSteps = report.containmentPlaybook || [];
+        sopSteps.forEach(function(sop, idx) {
+            var div = document.createElement('div');
+            div.className = 'm-sop-step';
+            div.innerHTML = '<div class="m-sop-num">' + (idx + 1) + '</div>' +
+                            '<div style="flex:1">' +
+                                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+                                    '<span style="font-weight:600;font-size:12px;color:#fff">' + sop.phase + '</span>' +
+                                    '<span style="font-size:10px;padding:2px 6px;background:rgba(255,255,255,.06);color:var(--lab)">' + sop.priority + '</span>' +
+                                '</div>' +
+                                '<div style="font-size:12px;color:#ccc;line-height:1.4">' + sop.action + '</div>' +
+                            '</div>';
+            sopList.appendChild(div);
+        });
+
+        // Tab 5: Raw Decoded Message
+        document.getElementById('mBodyText').textContent = data.body_text || '(No body text available)';
+
+        document.getElementById('threatModal').classList.add('active');
+    });
+}
+
+function copyModalBrief() {
+    if (!currentModalReport) return;
+    var r = currentModalReport;
+    var text = 'FORENSIC INCIDENT BRIEF: ' + (r.caseId || 'INCIDENT') + '\n' +
+               'Classification: ' + (r.classification?.attackType || 'Security Incident') + '\n' +
+               'Threat Score: ' + (r.classification?.threatScore || 0) + '/100 (' + (r.classification?.threatLevel || 'unknown').toUpperCase() + ')\n' +
+               'CVSS: ' + (r.classification?.cvssScore || 0) + '\n' +
+               'Sender: ' + (r.metadata?.sender || 'Unknown') + '\n' +
+               'Target: ' + (r.metadata?.recipient || 'Internal') + '\n' +
+               'Subject: ' + (r.metadata?.subject || 'N/A') + '\n\n' +
+               'Verdict:\n' + (r.executiveSummary?.verdict || '') + '\n\n' +
+               'Technical Narrative:\n' + (r.executiveSummary?.technicalNarrative || '');
+    navigator.clipboard.writeText(text).then(function() {
+        alert('✓ Forensic incident brief copied to clipboard.');
+    }).catch(function() {
+        prompt('Copy report briefing:', text);
+    });
+}
+
+function showConnectModal(tab) {
+    var card = document.getElementById('connectCard');
+    card.style.display = 'block';
+    switchConnTab(tab);
+    card.scrollIntoView({ behavior: 'smooth' });
+}
+
+function switchConnTab(tab) {
+    var tabAppPassBtn = document.getElementById('tabAppPassBtn');
+    var tabOAuthBtn = document.getElementById('tabOAuthBtn');
+    var tabPasteBtn = document.getElementById('tabPasteBtn');
+    var tabAppPassContent = document.getElementById('tabAppPassContent');
+    var tabOAuthContent = document.getElementById('tabOAuthContent');
+    var tabPasteContent = document.getElementById('tabPasteContent');
+
+    tabAppPassBtn.classList.remove('active');
+    tabOAuthBtn.classList.remove('active');
+    if (tabPasteBtn) tabPasteBtn.classList.remove('active');
+    tabAppPassContent.style.display = 'none';
+    tabOAuthContent.style.display = 'none';
+    if (tabPasteContent) tabPasteContent.style.display = 'none';
+
+    if (tab === 'oauth') {
+        tabOAuthBtn.classList.add('active');
+        tabOAuthContent.style.display = 'block';
+    } else if (tab === 'paste') {
+        if (tabPasteBtn) tabPasteBtn.classList.add('active');
+        if (tabPasteContent) tabPasteContent.style.display = 'block';
+    } else {
+        tabAppPassBtn.classList.add('active');
+        tabAppPassContent.style.display = 'block';
+    }
+}
+
+function handleDirectScan(e) {
+    e.preventDefault();
+    var btn = document.getElementById('scanTextBtn');
+    btn.textContent = 'Analyzing Threat...';
+    btn.disabled = true;
+
+    var sender = document.getElementById('pSender').value;
+    var subject = document.getElementById('pSubject').value;
+    var body = document.getElementById('pBody').value;
+
+    fetch('/admin/email-scanner/scan-text', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<%= csrfToken %>'
+        },
+        body: JSON.stringify({ sender: sender, subject: subject, body_text: body })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Scan error: ' + (data.error || 'Failed to analyze text'));
+            btn.textContent = '⚡ Analyze Threat Report Now';
+            btn.disabled = false;
+        }
+    })
+    .catch(function(err) {
+        alert('Network error during scan');
+        btn.textContent = '⚡ Analyze Threat Report Now';
+        btn.disabled = false;
+    });
+}
+
+function closeThreatInspector() {
+    document.getElementById('threatModal').classList.remove('active');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeThreatInspector();
+});
+</script>
+</body>
+</html>

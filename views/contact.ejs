@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Contact — CyberSec</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Space+Grotesk:wght@300;400;500;600;700&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="/css/chatbot.css">
+    <style>
+        @font-face{font-family:'SG';src:local('Space Grotesk');font-display:block}
+        @font-face{font-family:'JB';src:local('JetBrains Mono');font-display:block}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html,body{min-height:100%;background:#000}
+        body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;color:#fff;font-family:'SG','Space Grotesk',sans-serif}
+        a{color:inherit;text-decoration:none}
+        :root{--red:#c81b1c;--ink:#fff;--sub:#e6e6e6;--lab:#949494}
+
+        /* ── Layout ── */
+        .page{min-height:100vh;display:flex;flex-direction:column;position:relative}
+        .bg-vid{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;opacity:.15}
+        .bg-vid video{width:100%;height:100%;object-fit:cover;object-position:center top}
+        .content{position:relative;z-index:1;flex:1;display:flex;flex-direction:column}
+
+        /* ── Header ── */
+        .hdr{display:flex;align-items:center;justify-content:space-between;padding:32px 60px}
+        .hdr-logo{width:40px;height:40px;display:flex}
+        .hdr-logo svg{width:100%;height:100%}
+        .hdr-nav{display:flex;gap:32px;align-items:center}
+        .hdr-nav a{font-family:'JB','JetBrains Mono',monospace;font-size:15px;color:var(--sub);transition:color .2s}
+        .hdr-nav a:hover{color:var(--red)}
+        .hdr-nav .active{color:var(--red)}
+        @media(max-width:599px){.hdr{padding:24px 20px}.hdr-nav{gap:20px}.hdr-nav a{font-size:13px}}
+
+        /* ── Main ── */
+        .main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px 80px}
+        .card{width:100%;max-width:600px}
+        .card-eyebrow{font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--lab);margin-bottom:12px}
+        .card h1{font-weight:700;font-size:42px;letter-spacing:-1.6px;margin-bottom:8px}
+        .card .desc{font-family:'JB','JetBrains Mono',monospace;font-size:15px;color:var(--sub);line-height:1.6;margin-bottom:40px;letter-spacing:-.4px}
+        @media(max-width:599px){.card h1{font-size:30px}.card .desc{font-size:13px}}
+
+        /* ── Form ── */
+        .form-row{display:flex;gap:16px;margin-bottom:16px}
+        .form-row.full{display:block}
+        .field{flex:1;display:flex;flex-direction:column}
+        .field label{font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px}
+        .field input,.field textarea,.field select{
+            background:rgba(255,255,255,.05);
+            border:1px solid rgba(255,255,255,.12);
+            border-radius:0;
+            color:#fff;
+            font-family:'JB','JetBrains Mono',monospace;
+            font-size:15px;
+            padding:14px 16px;
+            outline:none;
+            transition:border-color .2s;
+            width:100%;
+        }
+        .field input:focus,.field textarea:focus{border-color:var(--red)}
+        .field textarea{resize:vertical;min-height:120px}
+        .field input::placeholder,.field textarea::placeholder{color:rgba(255,255,255,.25)}
+        @media(max-width:599px){.form-row{flex-direction:column}}
+
+        /* ── Checkbox ── */
+        .check-row{display:flex;align-items:center;gap:10px;margin-top:8px;margin-bottom:24px}
+        .check-row input[type="checkbox"]{
+            width:18px;height:18px;
+            accent-color:var(--red);
+            cursor:pointer;
+        }
+        .check-row label{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--sub);cursor:pointer}
+
+        /* ── Submit ── */
+        .submit-btn{
+            display:inline-flex;align-items:center;gap:12px;
+            background:var(--red);color:#fff;border:none;cursor:pointer;
+            padding:16px 28px;
+            font-family:'SG','Space Grotesk',sans-serif;font-weight:500;font-size:18px;letter-spacing:-.4px;
+            transition:background .2s;
+            border-radius:0;
+        }
+        .submit-btn:hover{background:#b01617}
+        .submit-btn svg{width:20px;height:16px;transition:transform .25s cubic-bezier(.2,.7,.2,1)}
+        .submit-btn:hover svg{transform:translateX(3px)}
+
+        /* ── Alerts ── */
+        .alert{padding:14px 18px;margin-bottom:24px;font-family:'JB','JetBrains Mono',monospace;font-size:14px;border-left:3px solid}
+        .alert-success{background:rgba(34,197,94,.08);color:#22c55e;border-color:#22c55e}
+        .alert-error{background:rgba(200,27,28,.08);color:#ef4444;border-color:#ef4444}
+
+        :focus-visible{outline:2px solid #fff;outline-offset:3px}
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="bg-vid">
+        <video autoplay muted loop playsinline preload="auto">
+            <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260809_132544_b6ef0174-ed95-45ad-9a2f-ccb8acfbdce8.mp4" type="video/mp4">
+        </video>
+    </div>
+    <div class="content">
+        <header class="hdr">
+            <a href="/" class="hdr-logo">
+                <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g stroke="#fff" stroke-width="3" stroke-linecap="butt"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                    <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(90,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                    <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(180,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                    <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(270,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                </svg>
+            </a>
+            <nav class="hdr-nav">
+                <a href="/">Home</a>
+                <a href="/contact" class="active">Contact</a>
+                <% if (user) { %><a href="/admin">Dashboard</a><% } else { %><a href="/login">Login</a><% } %>
+            </nav>
+        </header>
+
+        <main class="main">
+            <div class="card">
+                <div class="card-eyebrow">Get in touch</div>
+                <h1>Secure your systems</h1>
+                <p class="desc">Tell us about your security needs. Our team will respond within 24 hours.</p>
+
+                <% if (success) { %>
+                <div class="alert alert-success"><%= success %></div>
+                <% } %>
+                <% if (errors && errors.length) { %>
+                <div class="alert alert-error"><%= errors.join('. ') %></div>
+                <% } %>
+
+                <form action="/api/contact" method="POST" id="contactForm">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="hidden" name="source" value="<%= source %>">
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="name">Name *</label>
+                            <input type="text" id="name" name="name" placeholder="Your full name" required value="<%= values.name || '' %>">
+                        </div>
+                        <div class="field">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" placeholder="you@company.com" required value="<%= values.email || '' %>">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="company">Company</label>
+                            <input type="text" id="company" name="company" placeholder="Company name" value="<%= values.company || '' %>">
+                        </div>
+                        <div class="field">
+                            <label for="phone">Phone</label>
+                            <input type="tel" id="phone" name="phone" placeholder="+1 (555) 000-0000" value="<%= values.phone || '' %>">
+                        </div>
+                    </div>
+                    <div class="form-row full">
+                        <div class="field">
+                            <label for="message">Message *</label>
+                            <textarea id="message" name="message" placeholder="Describe your security requirements..." required><%= values.message || '' %></textarea>
+                        </div>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="newsletter" name="newsletter" value="1">
+                        <label for="newsletter">Subscribe to security updates</label>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        Send message
+                        <svg viewBox="0 0 21 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M0 9H20.1" stroke="#fff" stroke-width="2"/>
+                            <path d="M12.1 1L20.1 9L12.1 17" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+</div>
+<!-- AEGIS AI Cyber Defense Chatbot -->
+<script src="/js/chatbot.js" defer></script>
+</body>
+</html>

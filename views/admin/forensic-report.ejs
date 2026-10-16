@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Forensic Incident Dossier: <%= report.caseId %> — CyberSec SOC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=block" rel="stylesheet">
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{min-height:100%;background:#09090b}
+        body{color:#f4f4f5;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+        a{color:inherit;text-decoration:none}
+        
+        :root{
+            --bg:#09090b;--card:#121215;--border:rgba(255,255,255,.09);
+            --red:#e11d48;--crit:#ef4444;--high:#f97316;--med:#eab308;--safe:#22c55e;
+            --muted:#a1a1aa;--code:#27272a;
+        }
+
+        .container{max-width:1120px;margin:0 auto;padding:40px 24px}
+        
+        /* Top Navigation Bar */
+        .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+        .back-link{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);transition:color .2s}
+        .back-link:hover{color:#fff}
+        .actions-row{display:flex;gap:12px}
+        .btn{padding:8px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;border-radius:4px;border:1px solid var(--border);background:#18181b;color:#fff;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+        .btn:hover{background:#27272a;border-color:rgba(255,255,255,.2)}
+        .btn-primary{background:var(--red);border-color:var(--red)}
+        .btn-primary:hover{background:#be123c}
+
+        /* Dossier Header */
+        .dossier-header{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:32px;margin-bottom:28px;position:relative;overflow:hidden}
+        .dossier-header::before{
+            content:'';position:absolute;top:0;left:0;bottom:0;width:5px;
+            background:<%= report.classification.threatLevel==='critical'? 'var(--crit)' : report.classification.threatLevel==='high'? 'var(--high)' : report.classification.threatLevel==='medium'? 'var(--med)' : 'var(--safe)' %>;
+        }
+        .dossier-meta{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:20px;margin-bottom:20px}
+        .case-tag{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+        .dossier-title{font-size:26px;font-weight:700;letter-spacing:-.5px;color:#fff;margin-bottom:8px}
+        .dossier-subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
+        
+        .score-box{background:#18181b;border:1px solid var(--border);padding:16px 24px;border-radius:6px;text-align:right;min-width:200px}
+        .score-val{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;line-height:1;color:<%= report.classification.threatLevel==='critical'? 'var(--crit)' : report.classification.threatLevel==='high'? 'var(--high)' : report.classification.threatLevel==='medium'? 'var(--med)' : 'var(--safe)' %>}
+        .score-lbl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;margin-top:4px}
+        .cvss-badge{display:inline-block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(255,255,255,.06);padding:3px 8px;border-radius:3px;color:#e4e4e7}
+
+        /* Grid */
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px}
+        @media(max-width:860px){.grid-2{grid-template-columns:1fr}}
+
+        /* Section Card */
+        .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:28px;margin-bottom:28px}
+        .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+        .card-title{font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;color:#fff}
+        .card-tag{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 8px;background:rgba(255,255,255,.05);border-radius:4px;color:var(--muted)}
+
+        /* Meta detail rows */
+        .meta-list{display:flex;flex-direction:column;gap:12px}
+        .meta-row{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.04)}
+        .meta-row:last-child{border-bottom:none;padding-bottom:0}
+        .meta-k{color:var(--muted)}
+        .meta-v{color:#fff;text-align:right;max-width:65%;word-break:break-all}
+
+        /* MITRE Table */
+        .mitre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+        .mitre-card{background:#18181b;border:1px solid var(--border);border-radius:6px;padding:16px;border-left:3px solid var(--red)}
+        .mitre-id{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px}
+        .mitre-name{font-weight:600;font-size:14px;color:#fff;margin-bottom:4px}
+        .mitre-tactic{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:8px}
+        .mitre-desc{font-size:12px;color:#d4d4d8;line-height:1.4}
+
+        /* Forensics Lists */
+        .ioc-list{display:flex;flex-direction:column;gap:12px}
+        .ioc-item{background:#18181b;border:1px solid var(--border);border-radius:6px;padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+        .ioc-item.warn{border-left:3px solid var(--crit)}
+        .ioc-item.alert{border-left:3px solid var(--high)}
+        .ioc-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 6px;border-radius:3px;align-self:flex-start}
+        .ioc-badge.crit{background:rgba(239,68,68,.15);color:var(--crit)}
+        .ioc-badge.high{background:rgba(249,115,22,.15);color:var(--high)}
+        .ioc-val{font-family:'JetBrains Mono',monospace;font-size:13px;color:#fff;word-break:break-all}
+        .ioc-desc{font-size:12px;color:var(--muted)}
+
+        /* SOP Playbook Checklist */
+        .sop-list{display:flex;flex-direction:column;gap:14px}
+        .sop-step{background:#18181b;border:1px solid var(--border);border-radius:6px;padding:16px 20px;display:flex;gap:16px;align-items:flex-start}
+        .sop-num{width:28px;height:28px;border-radius:50%;background:rgba(225,29,72,.15);color:var(--red);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;flex-shrink:0}
+        .sop-content{flex:1}
+        .sop-phase{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#fff;margin-bottom:4px;display:flex;justify-content:space-between}
+        .sop-prio{font-size:10px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.08);color:var(--muted)}
+        .sop-action{font-size:13px;color:#d4d4d8;line-height:1.5}
+
+        /* Raw artifacts preview */
+        .code-block{background:#000;border:1px solid var(--border);border-radius:6px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#a1a1aa;max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+
+        /* Print styles */
+        @media print{
+            html,body{background:#fff;color:#000}
+            .container{max-width:100%;padding:0}
+            .top-bar,.actions-row{display:none}
+            .card,.dossier-header,.score-box,.mitre-card,.ioc-item,.sop-step{background:#fff!important;border:1px solid #ccc!important;color:#000!important}
+            .dossier-title,.card-title,.mitre-name,.sop-phase{color:#000!important}
+            .meta-k,.meta-v,.ioc-desc,.sop-action,.mitre-desc{color:#333!important}
+            .score-val{color:#c00!important}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Action Bar -->
+        <div class="top-bar">
+            <a href="/admin/email-scanner" class="back-link">
+                <span>← Return to Email Threat Radar</span>
+            </a>
+            <div class="actions-row">
+                <button class="btn" onclick="copyDossierSummary()">
+                    <span>📋 Copy Briefing</span>
+                </button>
+                <button class="btn" onclick="window.print()">
+                    <span>🖨️ Print / Save PDF</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Dossier Incident Header -->
+        <div class="dossier-header">
+            <div class="dossier-meta">
+                <div>
+                    <div class="case-tag">INCIDENT REPORT • <%= report.caseId %></div>
+                    <h1 class="dossier-title"><%= report.classification.attackType %></h1>
+                    <div class="dossier-subtitle">
+                        Investigated by <%= report.analystEngine %> • Target: <%= report.metadata.recipient %>
+                    </div>
+                </div>
+                <div class="score-box">
+                    <div class="score-val"><%= report.classification.threatScore %>/100</div>
+                    <div class="score-lbl">Threat Index (<%= report.classification.threatLevel.toUpperCase() %>)</div>
+                    <div class="cvss-badge">CVSS v3.1: <%= report.classification.cvssScore %></div>
+                </div>
+            </div>
+
+            <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:6px;padding:16px 20px;margin-top:20px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">EXECUTIVE ANALYST VERDICT</div>
+                <div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:6px"><%= report.executiveSummary.verdict %></div>
+                <div style="font-size:13px;color:#d4d4d8;line-height:1.5"><%= report.executiveSummary.technicalNarrative %></div>
+            </div>
+        </div>
+
+        <!-- Grid: Target Metadata & Blast Radius -->
+        <div class="grid-2">
+            <!-- Metadata Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📨 Message Telemetry & Envelope</div>
+                    <span class="card-tag">RFC822 Forensics</span>
+                </div>
+                <div class="meta-list">
+                    <div class="meta-row">
+                        <span class="meta-k">Subject</span>
+                        <span class="meta-v" style="font-weight:600"><%= report.metadata.subject %></span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">From (Claimed)</span>
+                        <span class="meta-v"><%= report.forensics.senderAnalysis.displayName %> &lt;<%= report.forensics.senderAnalysis.claimedEmail %>&gt;</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">Envelope Domain</span>
+                        <span class="meta-v"><%= report.forensics.senderAnalysis.rootDomain %></span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">Authentication Verdict</span>
+                        <span class="meta-v" style="color:<%= report.forensics.senderAnalysis.spoofVerdict==='VALID / UNTAMPERED'?'var(--safe)':'var(--crit)' %>">
+                            <%= report.forensics.senderAnalysis.spoofVerdict %>
+                        </span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">Target Recipient</span>
+                        <span class="meta-v"><%= report.metadata.recipient %></span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">Received Timestamp</span>
+                        <span class="meta-v"><%= new Date(report.metadata.timestamp).toLocaleString() %></span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">Message-ID Header</span>
+                        <span class="meta-v" style="font-size:11px"><%= report.metadata.messageId %></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blast Radius Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">💥 Blast Radius & Enterprise Exposure</div>
+                    <span class="card-tag">Impact Analysis</span>
+                </div>
+                <div class="meta-list">
+                    <div class="meta-row">
+                        <span class="meta-k">Potential Scope</span>
+                        <span class="meta-v" style="font-weight:600"><%= report.blastRadius.scope %></span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">Credential Exposure</span>
+                        <span class="meta-v"><%= report.blastRadius.dataExposureRisk %></span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">Lateral Movement</span>
+                        <span class="meta-v"><%= report.blastRadius.lateralMovementRisk %></span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">Compliance Trigger</span>
+                        <span class="meta-v"><%= report.blastRadius.complianceImpact %></span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-k">CVSS v3.1 Vector</span>
+                        <span class="meta-v" style="font-size:11px"><%= report.classification.cvssVector %></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MITRE ATT&CK Matrix Card -->
+        <% if (report.mitreTechniques && report.mitreTechniques.length > 0) { %>
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🎯 MITRE ATT&CK® Adversary Technique Mapping</div>
+                <span class="card-tag"><%= report.mitreTechniques.length %> Techniques Identified</span>
+            </div>
+            <div class="mitre-grid">
+                <% report.mitreTechniques.forEach(function(m) { %>
+                <div class="mitre-card">
+                    <div class="mitre-id"><%= m.id %></div>
+                    <div class="mitre-name"><%= m.name %></div>
+                    <div class="mitre-tactic"><%= m.tactic %></div>
+                    <div class="mitre-desc"><%= m.description %></div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+        <% } %>
+
+        <!-- Forensic Evidence / IOCs Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🔍 Indicators of Compromise (IOCs) & Forensics</div>
+                <span class="card-tag">Threat Telemetry</span>
+            </div>
+
+            <!-- Links Analysis -->
+            <% if (report.forensics.linksAnalysis && report.forensics.linksAnalysis.length > 0) { %>
+            <div style="margin-bottom:24px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">1. Extracted URLs & Infrastructure IOCs</div>
+                <div class="ioc-list">
+                    <% report.forensics.linksAnalysis.forEach(function(l) { %>
+                    <div class="ioc-item warn">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <span class="ioc-badge crit"><%= l.threatCategory %></span>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--crit)"><%= l.severity.toUpperCase() %> RISK</span>
+                        </div>
+                        <div class="ioc-val"><%= l.url %></div>
+                        <div class="ioc-desc">Tactical Context: <%= l.tacticalRisk %></div>
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Attachments Analysis -->
+            <% if (report.forensics.attachmentsAnalysis && report.forensics.attachmentsAnalysis.length > 0) { %>
+            <div style="margin-bottom:24px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">2. Weaponized File Attachments</div>
+                <div class="ioc-list">
+                    <% report.forensics.attachmentsAnalysis.forEach(function(a) { %>
+                    <div class="ioc-item warn">
+                        <span class="ioc-badge crit">DANGEROUS PAYLOAD (<%= a.extension %>)</span>
+                        <div class="ioc-val"><%= a.filename %></div>
+                        <div class="ioc-desc"><%= a.payloadVector %></div>
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Leaked Secrets -->
+            <% if (report.forensics.dataLeaksAnalysis && report.forensics.dataLeaksAnalysis.length > 0) { %>
+            <div style="margin-bottom:24px">
+                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">3. Exposed Secrets & Plaintext Tokens</div>
+                <div class="ioc-list">
+                    <% report.forensics.dataLeaksAnalysis.forEach(function(s) { %>
+                    <div class="ioc-item alert">
+                        <span class="ioc-badge high"><%= s.secretType %></span>
+                        <div class="ioc-val"><%= s.maskedSample %></div>
+                        <div class="ioc-desc"><%= s.impact %></div>
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+            <% } %>
+
+            <!-- Social Engineering Triggers -->
+            <% if (report.forensics.psychologicalTriggers && report.forensics.psychologicalTriggers.length > 0) { %>
+            <div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">4. Psychological Pretexting & Social Engineering Lures</div>
+                <div class="ioc-list">
+                    <% report.forensics.psychologicalTriggers.forEach(function(p) { %>
+                    <div class="ioc-item">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <span class="ioc-badge" style="background:rgba(255,255,255,.07);color:#fff"><%= p.intent %></span>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">Matched Token</span>
+                        </div>
+                        <div class="ioc-val">"<%= p.context %>"</div>
+                        <div class="ioc-desc"><%= p.tactic %></div>
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+            <% } %>
+
+            <% if (!report.forensics.linksAnalysis.length && !report.forensics.attachmentsAnalysis.length && !report.forensics.dataLeaksAnalysis.length && !report.forensics.psychologicalTriggers.length) { %>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--safe);padding:14px;background:rgba(34,197,94,.05);border-radius:6px;border:1px solid rgba(34,197,94,.2)">
+                ✓ Clean Telemetry: Zero malicious indicators, unauthorized redirects, or credential harvesting payloads identified.
+            </div>
+            <% } %>
+        </div>
+
+        <!-- Incident Response Playbook (SOP) Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">🛡️ SOC Incident Response Playbook (Standard Operating Procedure)</div>
+                <span class="card-tag">Containment Protocol</span>
+            </div>
+            <div class="sop-list">
+                <% report.containmentPlaybook.forEach(function(sop, index) { %>
+                <div class="sop-step">
+                    <div class="sop-num"><%= index + 1 %></div>
+                    <div class="sop-content">
+                        <div class="sop-phase">
+                            <span><%= sop.phase %></span>
+                            <span class="sop-prio"><%= sop.priority %></span>
+                        </div>
+                        <div class="sop-action"><%= sop.action %></div>
+                    </div>
+                </div>
+                <% }); %>
+            </div>
+        </div>
+
+        <!-- Raw Artifacts Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">📄 Decoded Message Body Artifact</div>
+                <span class="card-tag">Cryptographic Evidence</span>
+            </div>
+            <div class="code-block"><%= report.rawArtifacts.bodyExcerpt || '(No body text available)' %></div>
+        </div>
+    </div>
+
+    <script>
+    function copyDossierSummary() {
+        var text = 'FORENSIC INCIDENT DOSSIER: <%= report.caseId %>\n' +
+                   'Classification: <%= report.classification.attackType %>\n' +
+                   'Threat Index: <%= report.classification.threatScore %>/100 (<%= report.classification.threatLevel.toUpperCase() %>)\n' +
+                   'CVSS v3.1: <%= report.classification.cvssScore %>\n' +
+                   'Target: <%= report.metadata.recipient %>\n' +
+                   'Sender: <%= report.metadata.sender %>\n' +
+                   'Subject: <%= report.metadata.subject %>\n\n' +
+                   'Analyst Verdict:\n<%= report.executiveSummary.verdict %>\n\n' +
+                   'Key Findings:\n<%= report.executiveSummary.technicalNarrative %>';
+        navigator.clipboard.writeText(text).then(function() {
+            alert('✓ Forensic dossier summary copied to clipboard.');
+        }).catch(function() {
+            prompt('Copy dossier summary:', text);
+        });
+    }
+    </script>
+</body>
+</html>

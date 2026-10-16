@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Security built into every system layer</title>
+    <meta name="description"
+        content="Engineered to stay resilient, controlled, and uncompromised under pressure. 300+ clients, 99% satisfaction.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&family=Space+Grotesk:wght@300;400;500;600;700&display=block"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/chatbot.css">
+    <style>
+        /* ── FONT ALIASES ── */
+        @font-face {
+            font-family: 'SG';
+            src: local('Space Grotesk');
+            font-display: block
+        }
+
+        @font-face {
+            font-family: 'JB';
+            src: local('JetBrains Mono');
+            font-display: block
+        }
+
+        /* ── RESET ── */
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%;
+            background: #000;
+            overflow: hidden
+        }
+
+        body {
+            -webkit-font-smoothing: antialiased;
+            text-rendering: geometricPrecision;
+            color: #fff
+        }
+
+        button {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font: inherit
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none
+        }
+
+        ul,
+        li {
+            list-style: none
+        }
+
+        /* ── DESIGN TOKENS ── */
+        :root {
+            --s: min(100vw / 1505, 100vh / 700);
+            --red: #c81b1c;
+            --ink: #fff;
+            --sub: #e6e6e6;
+            --lab: #949494;
+            --bx: 60;
+            --by: 36;
+            --bs: 44;
+            --h1y: -12.5;
+            --suby: 167.5;
+            --numy: 19;
+            --laby: 74;
+        }
+
+        /* Tablet portrait */
+        @media(max-width:1023px)and (max-aspect-ratio:1/1) {
+            :root {
+                --s: clamp(0.82px, min(100vw / 900, 100vh / 1200), 1.25px);
+                --bx: 56;
+                --by: 33;
+                --bs: 40;
+                --h1y: -10.25;
+                --suby: 137.4;
+                --numy: 15.6;
+                --laby: 60.7;
+            }
+        }
+
+        /* Phone */
+        @media(max-width:599px) {
+            :root {
+                --s: min(100vw / 430, 100vh / 620, 1.02px);
+                --bx: 26;
+                --by: 21;
+                --bs: 34;
+                --h1y: -7.1;
+                --suby: 108;
+                --numy: 13;
+                --laby: 50;
+            }
+        }
+
+        /* ── SVG DEFS ── */
+        .svgdefs {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden
+        }
+
+        /* ── SCREEN / VIDEO LAYERS ── */
+        .screen {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            background: #000
+        }
+
+        .bg,
+        .bg2 {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none
+        }
+
+        .bg {
+            filter: url(#grade)
+        }
+
+        .bg video,
+        .bg2 video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+        }
+
+        .bg2 {
+            filter: url(#grade2);
+            mix-blend-mode: plus-lighter;
+            opacity: .35;
+            -webkit-mask-image: linear-gradient(180deg, transparent 21.5%, #000 100%);
+            mask-image: linear-gradient(180deg, transparent 21.5%, #000 100%);
+        }
+
+        .scrim {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            display: none
+        }
+
+        /* Tablet portrait video */
+        @media(max-width:1023px)and (max-aspect-ratio:1/1) {
+            .bg2 {
+                display: none
+            }
+
+            .bg video {
+                object-position: right top;
+                transform: scale(1.18);
+                transform-origin: right top
+            }
+
+            .bg {
+                -webkit-mask-image: linear-gradient(180deg, #000 0, #000 40%, transparent 64%);
+                mask-image: linear-gradient(180deg, #000 0, #000 40%, transparent 64%);
+            }
+
+            .scrim {
+                display: block;
+                background: linear-gradient(100deg, #000 26%, rgba(0, 0, 0, .74) 50%, rgba(0, 0, 0, .18) 76%, transparent 92%);
+            }
+        }
+
+        /* Phone video */
+        @media(max-width:599px) {
+
+            .bg video,
+            .bg2 video {
+                object-position: 78% top
+            }
+
+            .bg2 {
+                display: block
+            }
+
+            .bg2 {
+                -webkit-mask-image: linear-gradient(180deg, transparent 10%, #000 60%);
+                mask-image: linear-gradient(180deg, transparent 10%, #000 60%);
+            }
+
+            .bg {
+                -webkit-mask-image: none;
+                mask-image: none;
+            }
+
+            .scrim {
+                display: block;
+                background: linear-gradient(180deg, rgba(0, 0, 0, .10) 0%, rgba(0, 0, 0, .50) 24%, rgba(0, 0, 0, .86) 42%, #000 66%);
+            }
+        }
+
+        /* ── FRAME ── */
+        .frame {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* ── HEADER ── */
+        header {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            padding-left: calc(60 * var(--s));
+            padding-top: calc(35 * var(--s));
+            flex-shrink: 0;
+        }
+
+        .logo {
+            width: calc(45 * var(--s));
+            height: calc(45 * var(--s));
+            flex-shrink: 0;
+        }
+
+        .logo svg {
+            width: 100%;
+            height: 100%;
+            display: block
+        }
+
+        /* Nav */
+        .nav {
+            display: flex;
+            align-items: center;
+            margin-left: calc((482 - 60 - 45) * var(--s));
+            margin-top: calc((32 - 35) * var(--s));
+            height: calc(58 * var(--s));
+        }
+
+        .nav a {
+            font-family: 'JB', 'JetBrains Mono', monospace;
+            font-weight: 400;
+            font-size: calc(19.9 * var(--s));
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: calc(6 * var(--s));
+            transition: color .2s;
+            white-space: nowrap;
+        }
+
+        .nav a+a {
+            margin-left: calc(40 * var(--s))
+        }
+
+        .nav a:nth-child(2) {
+            margin-left: calc(53 * var(--s))
+        }
+
+        .nav a:nth-child(4) {
+            margin-left: calc(37 * var(--s))
+        }
+
+        .nav .chev {
+            width: calc(11.6 * var(--s));
+            height: calc(7.2 * var(--s));
+            margin-top: calc(-2.6 * var(--s));
+            flex-shrink: 0;
+        }
+
+        .nav .chev svg {
+            width: 100%;
+            height: 100%;
+            display: block
+        }
+
+        @media(hover:hover) {
+            .nav a:hover {
+                color: var(--red)
+            }
+        }
+
+        @media(max-width:1023px) {
+            .nav {
+                display: none
+            }
+        }
+
+        /* ── BURGER ── */
+        .burger {
+            display: none;
+            position: absolute;
+            right: calc(var(--bx) * var(--s));
+            top: calc(var(--by) * var(--s));
+            width: calc(var(--bs) * var(--s));
+            height: calc(var(--bs) * var(--s));
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            gap: calc(6 * var(--s));
+            z-index: 200;
+            padding: 0;
+        }
+
+        .burger span {
+            display: block;
+            height: calc(2 * var(--s));
+            background: #fff;
+            transition: transform .35s cubic-bezier(.2, .7, .2, 1), opacity .25s, width .3s;
+            width: 100%;
+            transform-origin: center center;
+        }
+
+        .burger span:nth-child(3) {
+            width: 47%
+        }
+
+        .nav-open .burger span:nth-child(1) {
+            transform: translateY(calc(8 * var(--s))) rotate(45deg);
+            width: 100%
+        }
+
+        .nav-open .burger span:nth-child(2) {
+            opacity: 0
+        }
+
+        .nav-open .burger span:nth-child(3) {
+            transform: translateY(calc(-8 * var(--s))) rotate(-45deg);
+            width: 100%
+        }
+
+        @media(max-width:1023px) {
+            .burger {
+                display: flex
+            }
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            background: var(--red);
+            border-radius: 0;
+            gap: calc(11 * var(--s));
+            padding: 0 calc(22 * var(--s)) 0 calc(18 * var(--s));
+            height: calc(58 * var(--s));
+            width: calc(212 * var(--s));
+            text-decoration: none;
+            transition: background .2s;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .btn-label {
+            font-family: 'SG', 'Space Grotesk', sans-serif;
+            font-weight: 480;
+            font-size: calc(20.85 * var(--s));
+            letter-spacing: calc(-0.62 * var(--s));
+            color: #fff;
+            transform: translateY(calc(1.5 * var(--s)));
+            white-space: nowrap;
+        }
+
+        .btn-arrow {
+            width: calc(21.5 * var(--s));
+            height: calc(18 * var(--s));
+            flex-shrink: 0;
+            transition: transform .25s cubic-bezier(.2, .7, .2, 1);
+            margin-left: auto;
+        }
+
+        .btn-arrow svg {
+            width: 100%;
+            height: 100%;
+            display: block
+        }
+
+        @media(hover:hover) {
+            .btn:hover {
+                background: #b01617
+            }
+
+            .btn:hover .btn-arrow {
+                transform: translateX(calc(3 * var(--s)))
+            }
+        }
+
+        /* Tablet buttons */
+        @media(max-width:1023px)and (max-aspect-ratio:1/1) {
+            .btn {
+                width: calc(174 * var(--s));
+                height: calc(47.6 * var(--s));
+                padding: 0 calc(18 * var(--s)) 0 calc(14.8 * var(--s));
+                gap: calc(9 * var(--s));
+            }
+
+            .btn-label {
+                font-size: calc(17.1 * var(--s))
+            }
+        }
+
+        /* Phone buttons */
+        @media(max-width:599px) {
+            .btn {
+                width: calc(185 * var(--s));
+                height: calc(50 * var(--s));
+                padding: 0 calc(19.1 * var(--s)) 0 calc(15.7 * var(--s));
+                gap: calc(9.6 * var(--s));
+            }
+
+            .btn-label {
+                font-size: calc(17.5 * var(--s))
+            }
+        }
+
+        /* Top CTA */
+        .btn-top {
+            position: absolute;
+            left: calc(1232 * var(--s));
+            top: calc(30 * var(--s));
+        }
+
+        @media(max-width:1023px) {
+            .btn-top {
+                display: none
+            }
+        }
+
+        /* ── SPACERS ── */
+        .sp {
+            flex-shrink: 1;
+            flex-grow: 0
+        }
+
+        .sp-a {
+            flex-basis: calc(239 * var(--s))
+        }
+
+        .sp-b {
+            flex-basis: calc(194 * var(--s))
+        }
+
+        .sp-c {
+            flex-basis: calc(115 * var(--s))
+        }
+
+        @media(max-width:1023px)and (max-aspect-ratio:1/1) {
+            .sp-a {
+                flex-basis: calc(340 * var(--s))
+            }
+
+            .sp-b {
+                flex-basis: calc(276 * var(--s))
+            }
+
+            .sp-c {
+                flex-basis: calc(163 * var(--s))
+            }
+        }
+
+        @media(max-width:599px) {
+            .sp-a {
+                flex-basis: calc(106 * var(--s))
+            }
+
+            .sp-b {
+                flex-basis: calc(92 * var(--s))
+            }
+
+            .sp-c {
+                flex-basis: calc(56 * var(--s))
+            }
+        }
+
+        /* ── HERO ── */
+        .hero {
+            position: relative;
+            padding-left: calc(73 * var(--s));
+            flex-shrink: 0;
+            height: calc(248 * var(--s) + 58 * var(--s));
+        }
+
+        .hero h1 {
+            font-family: 'SG', 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: calc(68.7 * var(--s));
+            line-height: calc(76 * var(--s));
+            letter-spacing: calc(-2.4 * var(--s));
+            color: var(--ink);
+            position: absolute;
+            top: calc(var(--h1y) * var(--s));
+            left: calc(73 * var(--s));
+        }
+
+        .hero h1 .ln {
+            display: block;
+        }
+
+        .hero .sub {
+            font-family: 'JB', 'JetBrains Mono', monospace;
+            font-weight: 400;
+            font-size: calc(18.7 * var(--s));
+            line-height: calc(26 * var(--s));
+            letter-spacing: calc(-0.87 * var(--s));
+            color: var(--sub);
+            position: absolute;
+            top: calc(var(--suby) * var(--s));
+            left: calc(73 * var(--s));
+        }
+
+        .hero .btn-cta {
+            position: absolute;
+            top: calc(248 * var(--s));
+            left: calc(73 * var(--s));
+        }
+
+        /* ── STATS ── */
+        .stats {
+            position: relative;
+            flex-shrink: 0;
+            height: calc(var(--laby) * var(--s) + 22 * var(--s));
+        }
+
+        .stat {
+            position: absolute;
+            display: flex;
+            flex-direction: column
+        }
+
+        .stat-num {
+            font-family: 'JB', 'JetBrains Mono', monospace;
+            font-weight: 480;
+            font-size: calc(33.45 * var(--s));
+            color: var(--ink);
+            line-height: 1;
+        }
+
+        .stat-lab {
+            font-family: 'SG', 'Space Grotesk', sans-serif;
+            font-weight: 400;
+            font-size: calc(21.9 * var(--s));
+            letter-spacing: calc(-0.62 * var(--s));
+            color: var(--lab);
+            line-height: 1;
+            margin-top: calc((var(--laby) - var(--numy) - 33.45) * var(--s));
+        }
+
+        .stat-s1 {
+            left: calc(70.4 * var(--s));
+            top: calc(var(--numy) * var(--s))
+        }
+
+        .stat-s2 {
+            left: calc(213.1 * var(--s));
+            top: calc(var(--numy) * var(--s))
+        }
+
+        .stat-s3 {
+            left: calc(392.6 * var(--s));
+            top: calc(var(--numy) * var(--s))
+        }
+
+        .stat-s3 .stat-num {
+            margin-left: calc(-4.4 * var(--s))
+        }
+
+        /* stat rules */
+        .stat-rule {
+            width: calc(1.5 * var(--s));
+            background: linear-gradient(180deg, rgba(255, 255, 255, .085), rgba(255, 255, 255, .21) 50%, rgba(255, 255, 255, .085));
+            position: absolute;
+            top: calc(var(--numy) * var(--s));
+            bottom: 0;
+        }
+
+        .r1 {
+            left: calc(181 * var(--s))
+        }
+
+        .r2 {
+            left: calc(356 * var(--s))
+        }
+
+        /* ── MOBILE MENU ── */
+        .menu {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .4s cubic-bezier(.2, .7, .2, 1), visibility 0s .4s;
+            padding-top: calc(90 * var(--s));
+            overflow-y: auto;
+        }
+
+        .nav-open .menu {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity .4s cubic-bezier(.2, .7, .2, 1), visibility 0s 0s;
+        }
+
+        .menu-tex {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            opacity: .4;
+            -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%);
+            mask-image: linear-gradient(180deg, transparent 0%, #000 30%);
+        }
+
+        .menu-tex video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            display: block;
+        }
+
+        .menu-rule {
+            position: absolute;
+            top: calc(80 * var(--s));
+            left: 0;
+            right: 0;
+            height: calc(2 * var(--s));
+            background: var(--red);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .55s cubic-bezier(.2, .7, .2, 1) .04s;
+        }
+
+        .nav-open .menu-rule {
+            transform: scaleX(1)
+        }
+
+        .menu-inner {
+            position: relative;
+            z-index: 2;
+            padding: calc(20 * var(--s)) calc(var(--bx) * var(--s)) calc(30 * var(--s));
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .menu-eye {
+            font-family: 'JB', 'JetBrains Mono', monospace;
+            font-weight: 400;
+            font-size: calc(11.5 * var(--s));
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            color: var(--lab);
+            margin-bottom: calc(24 * var(--s));
+        }
+
+        .menu-list {
+            display: flex;
+            flex-direction: column
+        }
+
+        .mrow {
+            font-family: 'SG', 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: calc(32 * var(--s));
+            color: var(--ink);
+            padding: calc(14 * var(--s)) 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: color .2s;
+            width: 100%;
+            text-align: left;
+        }
+
+        .mrow-link {
+            font-family: 'SG', 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: calc(32 * var(--s));
+            color: var(--ink);
+            padding: calc(14 * var(--s)) 0;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            display: block;
+            transition: color .2s;
+        }
+
+        @media(hover:hover) {
+
+            .mrow:hover,
+            .mrow-link:hover {
+                color: var(--red)
+            }
+        }
+
+        .mrow .mrow-chev {
+            width: calc(14 * var(--s));
+            height: calc(8 * var(--s));
+            transition: transform .3s cubic-bezier(.2, .7, .2, 1);
+        }
+
+        .mrow .mrow-chev svg {
+            width: 100%;
+            height: 100%;
+            display: block
+        }
+
+        .mrow[aria-expanded="true"] .mrow-chev {
+            transform: rotate(180deg)
+        }
+
+        .mrow-sub {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .4s cubic-bezier(.2, .7, .2, 1);
+        }
+
+        .mrow-sub.open {
+            max-height: calc(200 * var(--s))
+        }
+
+        .mrow-sub a {
+            display: block;
+            font-family: 'JB', 'JetBrains Mono', monospace;
+            font-weight: 400;
+            font-size: calc(17 * var(--s));
+            color: var(--sub);
+            padding: calc(10 * var(--s)) 0 calc(10 * var(--s)) calc(12 * var(--s));
+            transition: color .2s;
+        }
+
+        @media(hover:hover) {
+            .mrow-sub a:hover {
+                color: var(--red)
+            }
+        }
+
+        .menu-footer {
+            margin-top: auto;
+            padding-top: calc(30 * var(--s));
+        }
+
+        .btn-menu {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--red);
+            width: 100%;
+            height: calc(54 * var(--s));
+            gap: calc(10 * var(--s));
+            transition: background .2s;
+            cursor: pointer;
+            border-radius: 0;
+        }
+
+        @media(hover:hover) {
+            .btn-menu:hover {
+                background: #b01617
+            }
+        }
+
+        .menu-note {
+            font-family: 'JB', 'JetBrains Mono', monospace;
+            font-weight: 400;
+            font-size: calc(12.5 * var(--s));
+            color: var(--lab);
+            text-align: center;
+            margin-top: calc(14 * var(--s));
+        }
+
+        /* menu items stagger */
+        .menu-list>li {
+            opacity: 0;
+            transform: translateY(calc(16 * var(--s)));
+            transition: opacity .4s cubic-bezier(.2, .7, .2, 1), transform .4s cubic-bezier(.2, .7, .2, 1);
+        }
+
+        .nav-open .menu-list>li:nth-child(1) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .08s
+        }
+
+        .nav-open .menu-list>li:nth-child(2) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .14s
+        }
+
+        .nav-open .menu-list>li:nth-child(3) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .20s
+        }
+
+        .nav-open .menu-list>li:nth-child(4) {
+            opacity: 1;
+            transform: none;
+            transition-delay: .26s
+        }
+
+        .menu-footer {
+            opacity: 0;
+            transform: translateY(calc(12 * var(--s)));
+            transition: opacity .4s cubic-bezier(.2, .7, .2, 1) .30s, transform .4s cubic-bezier(.2, .7, .2, 1) .30s;
+        }
+
+        .nav-open .menu-footer {
+            opacity: 1;
+            transform: none
+        }
+
+        @media(min-width:1024px) {
+            .menu {
+                display: none !important
+            }
+        }
+
+        /* ── FOCUS ── */
+        :focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 3px
+        }
+
+        /* ── REDUCED MOTION ── */
+        @media(prefers-reduced-motion:reduce) {
+            * {
+                transition: none !important;
+                animation: none !important
+            }
+        }
+
+        /* ── ENTRANCE (armed by JS) ── */
+        html.intro .logo,
+        html.intro .nav a,
+        html.intro .burger,
+        html.intro .sub,
+        html.intro .stat-num,
+        html.intro .stat-lab {
+            opacity: 0;
+        }
+
+        html.intro .logo {
+            transform: scale(.9)
+        }
+
+        html.intro .nav a {
+            transform: translateY(calc(7 * var(--s)))
+        }
+
+        html.intro .sub {
+            transform: translateY(calc(14 * var(--s)))
+        }
+
+        html.intro .stat-num {
+            transform: translateY(calc(12 * var(--s)))
+        }
+
+        html.intro .stat-lab {
+            transform: translateY(calc(10 * var(--s)))
+        }
+
+        html.intro .stat-rule {
+            transform: scaleY(0)
+        }
+
+        html.intro .btn-top,
+        html.intro .btn-cta {
+            clip-path: inset(0 100% 0 0);
+        }
+
+        html.intro .hero h1 .ln {
+            overflow: hidden;
+            padding-bottom: calc(6 * var(--s));
+            margin-bottom: calc(-6 * var(--s));
+        }
+
+        html.intro .hero h1 .ln span {
+            display: block;
+            transform: translateY(120%);
+        }
+    </style>
+    <script>
+        // Arm entrance before paint
+        if (typeof Element.prototype.animate === 'function'
+            && !window.matchMedia('(prefers-reduced-motion:reduce)').matches) {
+            document.documentElement.classList.add('intro');
+        }
+    </script>
+</head>
+
+<body>
+
+    <!-- SVG Defs -->
+    <svg class="svgdefs" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <filter id="grade" color-interpolation-filters="sRGB">
+                <feComponentTransfer>
+                    <feFuncR type="table"
+                        tableValues="0.0018 0.0105 0.0154 0.0228 0.0307 0.0404 0.0485 0.0585 0.0719 0.0923 0.1205 0.1466 0.1657 0.1866 0.2197 0.2405 0.2485 0.2921 0.3362 0.3465 0.3472 0.3781 0.3781 0.4078 0.4199 0.4391 0.4604 0.4763 0.4798 0.5197 0.5473 0.5720 0.5995 0.6048 0.6232 0.6322 0.6483 0.6734 0.7201 0.7201 0.7410 0.7707 0.7707 0.7790 0.8084 0.8084 0.8390 0.8595 0.8707 0.8870 0.8993 0.9085 0.9132 0.9132 0.9162 0.9162 0.9162 0.9162 0.9162 0.9162 0.9162 0.9162 0.9162 0.9238 0.9300" />
+                    <feFuncG type="table"
+                        tableValues="0.0023 0.0106 0.0159 0.0250 0.0333 0.0445 0.0535 0.0620 0.0707 0.0827 0.0936 0.1063 0.1214 0.1402 0.1678 0.1727 0.2029 0.2176 0.2461 0.2757 0.2814 0.3050 0.3415 0.3692 0.3826 0.3884 0.4617 0.4617 0.4617 0.4643 0.4643 0.4808 0.5706 0.6005 0.6005 0.6390 0.6390 0.6390 0.6390 0.6390 0.6390 0.6390 0.6390 0.6390 0.6524 0.6664 0.6805 0.6945 0.7086 0.7227 0.7367 0.7508 0.7648 0.7789 0.7929 0.8070 0.8211 0.8351 0.8492 0.8632 0.8773 0.8913 0.9054 0.9195 0.9300" />
+                    <feFuncB type="table"
+                        tableValues="0.0021 0.0110 0.0187 0.0311 0.0377 0.0466 0.0584 0.0706 0.0791 0.0924 0.1039 0.1145 0.1316 0.1464 0.1614 0.1719 0.1887 0.2014 0.2247 0.2458 0.2954 0.2954 0.3089 0.3938 0.3938 0.3988 0.3988 0.4581 0.4581 0.4762 0.4762 0.4763 0.5374 0.5560 0.5813 0.5813 0.5813 0.5813 0.5835 0.5969 0.6104 0.6238 0.6373 0.6507 0.6642 0.6777 0.6911 0.7046 0.7181 0.7315 0.7449 0.7584 0.7719 0.7853 0.7988 0.8123 0.8257 0.8391 0.8526 0.8661 0.8795 0.8930 0.9065 0.9199 0.9300" />
+                </feComponentTransfer>
+            </filter>
+            <filter id="grade2" color-interpolation-filters="sRGB">
+                <feComponentTransfer>
+                    <feFuncR type="table"
+                        tableValues="0.0016 0.0092 0.0136 0.0201 0.0270 0.0356 0.0427 0.0515 0.0633 0.0812 0.1060 0.1290 0.1458 0.1642 0.1933 0.2116 0.2187 0.2570 0.2959 0.3049 0.3055 0.3327 0.3327 0.3589 0.3695 0.3864 0.4052 0.4191 0.4222 0.4573 0.4816 0.5034 0.5276 0.5322 0.5484 0.5563 0.5705 0.5926 0.6337 0.6337 0.6521 0.6782 0.6782 0.6855 0.7114 0.7114 0.7383 0.7564 0.7662 0.7806 0.7914 0.7995 0.8036 0.8036 0.8063 0.8063 0.8063 0.8063 0.8063 0.8063 0.8063 0.8063 0.8063 0.8129 0.8184" />
+                    <feFuncG type="table"
+                        tableValues="0.0015 0.0069 0.0103 0.0163 0.0216 0.0289 0.0348 0.0403 0.0460 0.0538 0.0608 0.0691 0.0789 0.0911 0.1091 0.1123 0.1319 0.1414 0.1600 0.1792 0.1829 0.1983 0.2220 0.2400 0.2487 0.2525 0.3001 0.3001 0.3001 0.3018 0.3018 0.3125 0.3709 0.3903 0.3903 0.4153 0.4153 0.4153 0.4153 0.4153 0.4153 0.4153 0.4153 0.4153 0.4241 0.4332 0.4423 0.4514 0.4606 0.4698 0.4789 0.4880 0.4971 0.5063 0.5154 0.5246 0.5337 0.5428 0.5520 0.5611 0.5702 0.5793 0.5885 0.5977 0.6045" />
+                    <feFuncB type="table"
+                        tableValues="0.0013 0.0066 0.0112 0.0187 0.0226 0.0280 0.0350 0.0424 0.0475 0.0554 0.0623 0.0687 0.0790 0.0878 0.0968 0.1031 0.1132 0.1208 0.1348 0.1475 0.1772 0.1772 0.1853 0.2363 0.2363 0.2393 0.2393 0.2749 0.2749 0.2857 0.2857 0.2858 0.3224 0.3336 0.3488 0.3488 0.3488 0.3488 0.3501 0.3581 0.3662 0.3743 0.3824 0.3904 0.3985 0.4066 0.4147 0.4228 0.4309 0.4389 0.4469 0.4550 0.4631 0.4712 0.4793 0.4874 0.4954 0.5035 0.5116 0.5197 0.5277 0.5358 0.5439 0.5519 0.5580" />
+                </feComponentTransfer>
+            </filter>
+        </defs>
+    </svg>
+
+    <div class="screen">
+        <!-- Video layer 1 -->
+        <div class="bg">
+            <video autoplay muted loop playsinline preload="auto" id="v1">
+                <source
+                    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260809_132544_b6ef0174-ed95-45ad-9a2f-ccb8acfbdce8.mp4"
+                    type="video/mp4">
+            </video>
+        </div>
+
+        <!-- Video layer 2 -->
+        <div class="bg2">
+            <video autoplay muted loop playsinline preload="auto" id="v2">
+                <source
+                    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260809_132544_b6ef0174-ed95-45ad-9a2f-ccb8acfbdce8.mp4"
+                    type="video/mp4">
+            </video>
+        </div>
+
+        <!-- Scrim (tablet/phone) -->
+        <div class="scrim"></div>
+
+        <!-- Frame -->
+        <div class="frame">
+
+            <!-- Header -->
+            <header>
+                <!-- Logo: 4 chevron arrows inward -->
+                <a href="/" class="logo">
+                    <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g stroke="#fff" stroke-width="3" stroke-linecap="butt">
+                            <line x1="23" y1="0" x2="23" y2="19.5" />
+                            <polyline points="14,10.2 23,19.2 32,10.2" fill="none" />
+                        </g>
+                        <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(90,23,23)">
+                            <line x1="23" y1="0" x2="23" y2="19.5" />
+                            <polyline points="14,10.2 23,19.2 32,10.2" fill="none" />
+                        </g>
+                        <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(180,23,23)">
+                            <line x1="23" y1="0" x2="23" y2="19.5" />
+                            <polyline points="14,10.2 23,19.2 32,10.2" fill="none" />
+                        </g>
+                        <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(270,23,23)">
+                            <line x1="23" y1="0" x2="23" y2="19.5" />
+                            <polyline points="14,10.2 23,19.2 32,10.2" fill="none" />
+                        </g>
+                    </svg>
+                </a>
+
+                <!-- Nav (desktop) -->
+                <nav class="nav" aria-label="Main navigation">
+                    <a href="/">Home</a>
+                    <a href="#">Resources<span class="chev"><svg viewBox="0 0 11 6" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 1L5.5 5L10 1" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg></span></a>
+                    <a href="#">Benefits<span class="chev"><svg viewBox="0 0 11 6" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 1L5.5 5L10 1" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg></span></a>
+                    <a href="/contact">Contact</a>
+                </nav>
+
+                <!-- Burger (mobile) -->
+                <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="menu">
+                    <span></span><span></span><span></span>
+                </button>
+
+                <!-- Top CTA -->
+                <a href="/contact?source=cta_header" class="btn btn-top">
+                    <span class="btn-label">Secure system</span>
+                    <span class="btn-arrow"><svg viewBox="0 0 21 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M0 9H20.1" stroke="#fff" stroke-width="2" />
+                            <path d="M12.1 1L20.1 9L12.1 17" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg></span>
+                </a>
+            </header>
+
+            <!-- Spacer A -->
+            <div class="sp sp-a"></div>
+
+            <!-- Hero -->
+            <section class="hero">
+                <h1>
+                    <span class="ln"><span>Security built into</span></span>
+                    <span class="ln"><span>every system layer</span></span>
+                </h1>
+                <p class="sub">Engineered to stay resilient, controlled,<br>and uncompromised under pressure.</p>
+                <a href="/contact?source=cta_hero" class="btn btn-cta">
+                    <span class="btn-label">Secure system</span>
+                    <span class="btn-arrow"><svg viewBox="0 0 21 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M0 9H20.1" stroke="#fff" stroke-width="2" />
+                            <path d="M12.1 1L20.1 9L12.1 17" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg></span>
+                </a>
+            </section>
+
+            <!-- Spacer B -->
+            <div class="sp sp-b"></div>
+
+            <!-- Stats (dynamic from DB) -->
+            <section class="stats">
+                <% stats.forEach(function(stat, i) { %>
+                <div class="stat stat-s<%= i + 1 %>">
+                    <span class="stat-num"><%= stat.stat_value %></span>
+                    <span class="stat-lab"><%= stat.stat_label %></span>
+                </div>
+                <% }); %>
+                <div class="stat-rule r1"></div>
+                <div class="stat-rule r2"></div>
+            </section>
+
+            <!-- Spacer C -->
+            <div class="sp sp-c"></div>
+
+        </div><!-- /.frame -->
+    </div><!-- /.screen -->
+
+    <!-- Mobile Menu -->
+    <div id="menu" class="menu" aria-hidden="true">
+        <div class="menu-tex">
+            <video autoplay muted loop playsinline preload="auto" id="v3">
+                <source
+                    src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260809_132544_b6ef0174-ed95-45ad-9a2f-ccb8acfbdce8.mp4"
+                    type="video/mp4">
+            </video>
+        </div>
+        <div class="menu-rule"></div>
+        <div class="menu-inner">
+            <div class="menu-eye">Menu</div>
+            <ul class="menu-list">
+                <li><a href="/" class="mrow-link">Home</a></li>
+                <li>
+                    <button class="mrow" aria-expanded="false">Resources <span class="mrow-chev"><svg viewBox="0 0 11 6"
+                                fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 1L5.5 5L10 1" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg></span></button>
+                    <div class="mrow-sub">
+                        <a href="#">Documentation</a>
+                        <a href="#">Threat reports</a>
+                        <a href="#">Changelog</a>
+                    </div>
+                </li>
+                <li>
+                    <button class="mrow" aria-expanded="false">Benefits <span class="mrow-chev"><svg viewBox="0 0 11 6"
+                                fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M1 1L5.5 5L10 1" stroke="currentColor" stroke-width="1.7"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg></span></button>
+                    <div class="mrow-sub">
+                        <a href="#">Continuous monitoring</a>
+                        <a href="#">Access control</a>
+                        <a href="#">Incident response</a>
+                    </div>
+                </li>
+                <li><a href="/contact" class="mrow-link">Contact</a></li>
+            </ul>
+            <div class="menu-footer">
+                <a href="/contact?source=cta_menu" class="btn-menu">
+                    <span class="btn-label">Secure system</span>
+                    <span class="btn-arrow"><svg viewBox="0 0 21 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M0 9H20.1" stroke="#fff" stroke-width="2" />
+                            <path d="M12.1 1L20.1 9L12.1 17" stroke="#fff" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg></span>
+                </a>
+                <p class="menu-note"><%= stats[0]?.stat_value || '300+' %> clients &nbsp;/&nbsp; <%= stats[1]?.stat_value || '99%' %> satisfaction</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            /* ── VIDEO SYNC ── */
+            const v1 = document.getElementById('v1');
+            const v2 = document.getElementById('v2');
+            const v3 = document.getElementById('v3');
+            const vids = [v2, v3];
+
+            if (window.matchMedia('(prefers-reduced-motion:reduce)').matches) {
+                [v1, v2, v3].forEach(function (v) { v.pause(); v.removeAttribute('autoplay') });
+            } else {
+                v1.addEventListener('timeupdate', function () {
+                    var t = v1.currentTime;
+                    vids.forEach(function (v) {
+                        if (Math.abs(v.currentTime - t) > 0.12) v.currentTime = t;
+                    });
+                });
+            }
+
+            /* ── BURGER / MENU ── */
+            var burger = document.getElementById('burger');
+            var menu = document.getElementById('menu');
+            var isOpen = false;
+
+            function openMenu() {
+                isOpen = true;
+                document.body.classList.add('nav-open');
+                burger.setAttribute('aria-label', 'Close menu');
+                burger.setAttribute('aria-expanded', 'true');
+                menu.setAttribute('aria-hidden', 'false');
+            }
+            function closeMenu() {
+                isOpen = false;
+                document.body.classList.remove('nav-open');
+                burger.setAttribute('aria-label', 'Open menu');
+                burger.setAttribute('aria-expanded', 'false');
+                menu.setAttribute('aria-hidden', 'true');
+                menu.querySelectorAll('.mrow-sub.open').forEach(function (s) {
+                    s.classList.remove('open');
+                    s.previousElementSibling.setAttribute('aria-expanded', 'false');
+                });
+            }
+
+            burger.addEventListener('click', function () { isOpen ? closeMenu() : openMenu() });
+
+            // Accordion (only one open)
+            menu.querySelectorAll('.mrow').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var sub = btn.nextElementSibling;
+                    var wasOpen = sub.classList.contains('open');
+                    menu.querySelectorAll('.mrow-sub.open').forEach(function (s) {
+                        s.classList.remove('open');
+                        s.previousElementSibling.setAttribute('aria-expanded', 'false');
+                    });
+                    if (!wasOpen) {
+                        sub.classList.add('open');
+                        btn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+            });
+
+            // Escape closes
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && isOpen) closeMenu();
+            });
+
+            // Resize to desktop closes
+            var mq = window.matchMedia('(min-width:1024px)');
+            mq.addEventListener('change', function (e) { if (e.matches && isOpen) closeMenu() });
+
+            /* ── ENTRANCE ANIMATION ── */
+            if (!document.documentElement.classList.contains('intro')) return;
+
+            var probe = document.createElement('div');
+            probe.style.cssText = 'position:absolute;top:-9999px;left:-9999px;width:calc(100*var(--s));visibility:hidden;pointer-events:none';
+            document.body.appendChild(probe);
+
+            function getS() { return probe.getBoundingClientRect().width / 100 }
+
+            var EXPO = [.16, 1, .3, 1];
+            var QUINT = [.22, 1, .36, 1];
+            var QUART = [.25, 1, .5, 1];
+            var TYPE = [.22, .85, .24, 1];
+
+            var isPhone = window.matchMedia('(max-width:599px)').matches;
+            var M = isPhone ? 0.86 : 1;
+
+            function d(ms) { return ms * M }
+
+            function run() {
+                var s = getS();
+                var anims = [];
+
+                function a(el, kf, dur, delay, easing) {
+                    if (!el) return;
+                    var anim = el.animate(kf, { duration: d(dur), delay: d(delay), easing: 'cubic-bezier(' + easing.join(',') + ')', fill: 'forwards' });
+                    anims.push(anim);
+                }
+
+                var logo = document.querySelector('.logo');
+                a(logo, [{ opacity: 0, transform: 'scale(.9)' }, { opacity: 1, transform: 'scale(1)' }], 700, 0, EXPO);
+
+                document.querySelectorAll('.nav a').forEach(function (el, i) {
+                    a(el, [{ opacity: 0, transform: 'translateY(' + 7 * s + 'px)' }, { opacity: 1, transform: 'translateY(0)' }], 620, 120 + i * 55, QUINT);
+                });
+
+                var burgerEl = document.querySelector('.burger');
+                a(burgerEl, [{ opacity: 0 }, { opacity: 1 }], 550, 180, QUART);
+
+                var btnTop = document.querySelector('.btn-top');
+                a(btnTop, [{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)' }], 660, 280, EXPO);
+
+                document.querySelectorAll('.hero h1 .ln span').forEach(function (el, i) {
+                    a(el, [{ transform: 'translateY(120%)' }, { transform: 'translateY(0%)' }], 980, 340 + i * 90, TYPE);
+                });
+
+                var sub = document.querySelector('.sub');
+                a(sub, [{ opacity: 0, transform: 'translateY(' + 14 * s + 'px)' }, { opacity: 1, transform: 'translateY(0)' }], 720, 740, QUINT);
+
+                var btnCta = document.querySelector('.btn-cta');
+                a(btnCta, [{ clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)' }], 700, 900, EXPO);
+
+                document.querySelectorAll('.stat-rule').forEach(function (el, i) {
+                    a(el, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], 600, 980 + i * 70, QUART);
+                });
+
+                document.querySelectorAll('.stat-num').forEach(function (el, i) {
+                    a(el, [{ opacity: 0, transform: 'translateY(' + 12 * s + 'px)' }, { opacity: 1, transform: 'translateY(0)' }], 660, 1040 + i * 85, QUINT);
+                });
+
+                document.querySelectorAll('.stat-lab').forEach(function (el, i) {
+                    a(el, [{ opacity: 0, transform: 'translateY(' + 10 * s + 'px)' }, { opacity: 1, transform: 'translateY(0)' }], 620, 1100 + i * 85, QUINT);
+                });
+
+                var maxEnd = d(1100 + 2 * 85 + 620);
+                var done = false;
+                function finish() {
+                    if (done) return;
+                    done = true;
+                    document.documentElement.classList.remove('intro');
+                    anims.forEach(function (an) { try { an.cancel() } catch (e) { } });
+                    probe.remove();
+                }
+                setTimeout(finish, 4000);
+                var last = anims[anims.length - 1];
+                if (last && last.finished) last.finished.then(finish).catch(finish);
+                else setTimeout(finish, maxEnd + 200);
+            }
+
+            var started = false;
+            function startOnce() {
+                if (started) return;
+                started = true;
+                requestAnimationFrame(function () { run() });
+            }
+
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(function () {
+                    requestAnimationFrame(startOnce);
+                });
+            }
+            setTimeout(function () {
+                requestAnimationFrame(startOnce);
+            }, 1000);
+            setTimeout(startOnce, 1200);
+
+        })();
+    </script>
+    <!-- AEGIS AI Cyber Defense Chatbot -->
+    <script src="/js/chatbot.js" defer></script>
+</body>
+
+</html>
