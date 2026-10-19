@@ -2,6 +2,8 @@
  * Cybersecurity Threat Scanner & AI Email Summarizer Engine
  */
 
+const { classifyEmail } = require('./emailClassifier');
+
 // ── Lookalike / Typosquatting Brand Patterns ──
 const BRAND_PATTERNS = [
   { name: 'PayPal', pattern: /\b(?:paypa[l1i]|pay-pal)\b/i, legit: 'paypal.com' },
@@ -261,7 +263,16 @@ function scanEmailThreats(emailData) {
   const hasHighConfidencePhish = threatScore >= 50 && phishingReasons.length > 0;
   const isPhishing = threatScore >= 60 || hasCriticalLink || hasHighConfidencePhish;
 
-  // 6. ── EXECUTIVE AI/SMART SUMMARY GENERATOR ──
+  // 6. ── MULTI-CLASS AI EMAIL CLASSIFICATION ──
+  const classification = classifyEmail({
+    subject,
+    body_text,
+    sender,
+    attachments,
+    links: maliciousLinks
+  });
+
+  // 7. ── EXECUTIVE AI/SMART SUMMARY GENERATOR ──
   const summary = generateEmailSummary({
     subject,
     sender,
@@ -273,7 +284,8 @@ function scanEmailThreats(emailData) {
     isPhishing,
     phishingReasons,
     leakedSecrets,
-    maliciousLinks
+    maliciousLinks,
+    classification
   });
 
   return {
@@ -285,6 +297,10 @@ function scanEmailThreats(emailData) {
     suspicious_attachments: JSON.stringify(suspiciousAttachments),
     leaked_secrets: JSON.stringify(leakedSecrets),
     auth_issues: JSON.stringify(authIssues),
+    classification_category: classification.category,
+    classification_confidence: classification.confidence,
+    classification_details: JSON.stringify(classification),
+    classification,
     summary
   };
 }
@@ -304,22 +320,25 @@ function generateEmailSummary({
   isPhishing,
   phishingReasons,
   leakedSecrets,
-  maliciousLinks
+  maliciousLinks,
+  classification
 }) {
   const displayName = (senderDisplayName || sender_name || '').trim();
   const cleanBody = (body_text || '').replace(/\s+/g, ' ').trim();
   const firstSentences = cleanBody.split(/(?<=[.?!])\s+/).slice(0, 2).join(' ');
 
-  let intent = 'General Communication';
-  if (isPhishing) intent = 'Social Engineering / Credential Harvest';
-  else if (leakedSecrets.length > 0) intent = 'Sensitive Data Exposure';
-  else if (/invoice|billing|payment|receipt|wire/i.test(subject + ' ' + cleanBody)) intent = 'Financial / Invoice Notification';
-  else if (/security|alert|password|login|verify/i.test(subject)) intent = 'Security & Account Alert';
-  else if (/meeting|calendar|schedule|zoom|sync/i.test(subject + ' ' + cleanBody)) intent = 'Schedule / Calendar Request';
+  let intent = classification ? classification.categoryLabel : 'General Communication';
+  if (!classification) {
+    if (isPhishing) intent = 'Social Engineering / Credential Harvest';
+    else if (leakedSecrets.length > 0) intent = 'Sensitive Data Exposure';
+    else if (/invoice|billing|payment|receipt|wire/i.test(subject + ' ' + cleanBody)) intent = 'Financial / Invoice Notification';
+    else if (/security|alert|password|login|verify/i.test(subject)) intent = 'Security & Account Alert';
+    else if (/meeting|calendar|schedule|zoom|sync/i.test(subject + ' ' + cleanBody)) intent = 'Schedule / Calendar Request';
+  }
 
   let verdict = '';
   if (threatLevel === 'critical') {
-    verdict = `⚠️ CRITICAL RISK: High-confidence phishing attack detected targeting credentials. Do not open links or reply.`;
+    verdict = `⚠️ CRITICAL RISK: High-confidence threat detected (${classification ? classification.categoryLabel : 'Malicious'}). Do not open links or reply.`;
   } else if (threatLevel === 'high') {
     verdict = `🚨 HIGH RISK: Significant threat indicators detected (${phishingReasons[0] || 'Unverified sender requesting sensitive action'}).`;
   } else if (threatLevel === 'medium') {
@@ -336,6 +355,13 @@ function generateEmailSummary({
     overview: excerpt,
     verdict,
     score: threatScore,
+    classification: classification ? {
+      category: classification.category,
+      label: classification.categoryLabel,
+      confidence: classification.confidence,
+      badge: classification.badge,
+      action: classification.recommendedAction
+    } : null,
     flagsCount: phishingReasons.length + leakedSecrets.length + maliciousLinks.length
   });
 }

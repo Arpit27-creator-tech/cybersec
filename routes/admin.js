@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../database/db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 const { sanitize } = require('../middleware/validate');
 
 // All admin routes require auth
@@ -73,7 +73,7 @@ router.get('/leads', (req, res) => {
 });
 
 // ── Update lead status ──
-router.patch('/leads/:id', (req, res) => {
+router.patch('/leads/:id', requireAdmin, (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid lead ID' });
@@ -96,7 +96,7 @@ router.patch('/leads/:id', (req, res) => {
 });
 
 // ── Delete lead ──
-router.delete('/leads/:id', (req, res) => {
+router.delete('/leads/:id', requireAdmin, (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid lead ID' });
@@ -118,7 +118,7 @@ router.get('/newsletter', (req, res) => {
 });
 
 // ── Remove subscriber ──
-router.delete('/newsletter/:id', (req, res) => {
+router.delete('/newsletter/:id', requireAdmin, (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid subscriber ID' });
@@ -141,7 +141,7 @@ router.get('/settings', (req, res) => {
 });
 
 // ── Update a stat ──
-router.put('/stats/:id', (req, res) => {
+router.put('/stats/:id', requireAdmin, (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id) || id <= 0) {
     return res.status(400).json({ error: 'Invalid stat ID' });

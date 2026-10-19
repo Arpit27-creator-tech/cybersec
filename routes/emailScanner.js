@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
 const db = require('../database/db');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 const {
   getAuthUrl,
   getTokensFromCode,
@@ -13,49 +13,15 @@ const {
   fetchAndScanGmail,
   generateDemoThreatEmails
 } = require('../services/gmailService');
-const { fetchAndScanImapEmails } = require('../services/imapService');
+const { fetchAndScanImapEmails, verifyImapConnection } = require('../services/imapService');
 const { scanEmailThreats } = require('../services/threatScanner');
 const { generateForensicReport } = require('../services/forensicReportGenerator');
+const emailClassifier = require('../services/emailClassifier');
 
-// ── Encryption helpers for credentials at rest ──
-const ENCRYPTION_ALGORITHM = 'aes-256-gcm';
-
-function getEncryptionKey() {
-  const secret = process.env.SESSION_SECRET || 'cybersec-secret-super-key-2026';
-  return crypto.createHash('sha256').update(secret).digest();
-}
-
-function encryptToken(plainText) {
-  if (!plainText) return null;
-  const iv = crypto.randomBytes(12);
-  const cipher = crypto.createCipheriv(ENCRYPTION_ALGORITHM, getEncryptionKey(), iv);
-  let encrypted = cipher.update(plainText, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  const authTag = cipher.getAuthTag().toString('hex');
-  return `enc:${iv.toString('hex')}:${authTag}:${encrypted}`;
-}
-
-function decryptToken(cipherText) {
-  if (!cipherText) return null;
-  if (!cipherText.startsWith('enc:')) {
-    // Return backward-compatible plaintext if not yet encrypted
-    return cipherText;
-  }
-  try {
-    const parts = cipherText.split(':');
-    const iv = Buffer.from(parts[1], 'hex');
-    const authTag = Buffer.from(parts[2], 'hex');
-    const encrypted = parts[3];
-    const decipher = crypto.createDecipheriv(ENCRYPTION_ALGORITHM, getEncryptionKey(), iv);
-    decipher.setAuthTag(authTag);
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
-  } catch (e) {
-    console.error('Decryption failed:', e.message);
-    return cipherText;
-  }
-}
+// ── Encryption and shared service helpers ──
+const { encryptToken, decryptToken } = require('../services/tokenCrypto');
+const { simpleParser } = require('mailparser');
+const backgroundScanner = require('../services/backgroundScanner');
 
 // ── Configure Google OAuth Credentials ──
 router.post('/admin/email-scanner/config-oauth', requireAuth, (req, res) => {
@@ -166,9 +132,9 @@ router.get('/auth/google/callback', requireAuth, async (req, res) => {
   }
 });
 
-// ── Main Threat Scanner Dashboard ──
 router.get('/admin/email-scanner', requireAuth, (req, res) => {
-  const account = db.prepare("SELECT * FROM email_accounts WHERE user_id = ? AND status = 'connected'").get(req.session.userId);
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  const account = db.prepare("SELECT * FROM email_accounts WHERE user_id = ? ORDER BY id DESC LIMIT 1").get(req.session.userId);
   
   // Filter parameters
   const threatFilter = req.query.filter || 'all';
@@ -237,10 +203,155 @@ router.get('/admin/email-scanner', requireAuth, (req, res) => {
     threatFilter,
     searchQuery,
     isOAuthConfigured,
+    daemonStatus: backgroundScanner.getStatus(),
     oauthError: req.query.oauth_error || null,
     connectedSuccess: req.query.connected === 'true',
     scannedCount: req.query.scanned ? parseInt(req.query.scanned, 10) : null
   });
+});
+
+// ── Background Daemon Status & Controls ──
+router.get('/admin/email-scanner/daemon/status', requireAuth, (req, res) => {
+  res.json(backgroundScanner.getStatus());
+});
+
+router.post('/admin/email-scanner/daemon/toggle', requireAuth, requireAdmin, (req, res) => {
+  const { enabled, interval } = req.body;
+  const mins = parseInt(interval, 10) || 5;
+  let status;
+  if (enabled === false || enabled === '0' || enabled === 'false') {
+    status = backgroundScanner.stopDaemon();
+  } else {
+    status = backgroundScanner.startDaemon(mins);
+  }
+  res.json({ success: true, status });
+});
+
+router.post('/admin/email-scanner/daemon/run-now', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const result = await backgroundScanner.runScanCycle();
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Failed running scan cycle' });
+  }
+});
+
+// ── Ingest & Scan .EML File / Raw MIME Upload ──
+router.post('/admin/email-scanner/upload-eml', requireAuth, express.text({ type: ['message/rfc822', 'text/plain', 'application/octet-stream'], limit: '10mb' }), async (req, res) => {
+  try {
+    let rawMime = '';
+    if (typeof req.body === 'string' && req.body.trim()) {
+      rawMime = req.body;
+    } else if (req.body && req.body.emlContent) {
+      rawMime = req.body.emlContent;
+    }
+
+    if (!rawMime) {
+      return res.status(400).json({ error: 'No EML or MIME email content provided' });
+    }
+
+    const parsed = await simpleParser(rawMime);
+    const subject = (parsed.subject || '(Uploaded EML Message)').trim();
+    const senderObj = parsed.from?.value?.[0] || {};
+    const senderEmail = (senderObj.address || 'external@sender.com').trim();
+    const senderName = (senderObj.name || '').trim();
+    const recipient = parsed.to?.value?.[0]?.address || 'internal@recipient.com';
+    const dateVal = parsed.date instanceof Date && !isNaN(parsed.date.getTime()) ? parsed.date.toISOString() : new Date().toISOString();
+
+    let bodyText = (parsed.text || '').trim();
+    if (!bodyText && parsed.html) {
+      bodyText = parsed.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    if (!bodyText) bodyText = subject;
+
+    const attachments = (parsed.attachments || []).map(att => ({
+      filename: att.filename || 'attachment',
+      contentType: att.contentType || 'application/octet-stream',
+      size: att.size || 0
+    }));
+
+    const headersMap = {};
+    if (parsed.replyTo?.value?.[0]?.address) {
+      headersMap['reply-to'] = parsed.replyTo.value[0].address;
+    }
+    if (parsed.headers) {
+      for (const [k, v] of parsed.headers) {
+        if (typeof v === 'string') headersMap[k.toLowerCase()] = v;
+      }
+    }
+
+    const threatReport = scanEmailThreats({
+      sender: senderEmail,
+      sender_name: senderName,
+      recipient,
+      subject,
+      body_text: bodyText,
+      body_html: parsed.html || '',
+      headers: headersMap,
+      attachments
+    });
+
+    const msgId = parsed.messageId || `eml-upload-${Date.now()}`;
+    const account = db.prepare('SELECT id FROM email_accounts WHERE user_id = ?').get(req.session.userId);
+
+    db.prepare(`
+      INSERT INTO email_scans (
+        account_id, message_id, thread_id, sender, sender_name, recipient,
+        subject, date, snippet, body_text, summary, threat_score, threat_level,
+        is_phishing, phishing_reasons, malicious_links, suspicious_attachments,
+        leaked_secrets, auth_issues, classification_category, classification_confidence,
+        classification_details, scanned_at
+      ) VALUES (
+        ?, ?, NULL, ?, ?, ?,
+        ?, ?, ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, CURRENT_TIMESTAMP
+      )
+      ON CONFLICT(message_id) DO UPDATE SET
+        threat_score = excluded.threat_score,
+        threat_level = excluded.threat_level,
+        is_phishing = excluded.is_phishing,
+        summary = excluded.summary,
+        classification_category = excluded.classification_category,
+        classification_confidence = excluded.classification_confidence,
+        classification_details = excluded.classification_details,
+        scanned_at = CURRENT_TIMESTAMP
+    `).run(
+      account ? account.id : null,
+      msgId,
+      senderEmail,
+      senderName,
+      recipient,
+      subject,
+      dateVal,
+      bodyText.substring(0, 150),
+      bodyText.substring(0, 4000),
+      threatReport.summary,
+      threatReport.threat_score,
+      threatReport.threat_level,
+      threatReport.is_phishing,
+      threatReport.phishing_reasons,
+      threatReport.malicious_links,
+      threatReport.suspicious_attachments,
+      threatReport.leaked_secrets,
+      threatReport.auth_issues,
+      threatReport.classification_category || 'legitimate',
+      threatReport.classification_confidence || 0,
+      threatReport.classification_details || '{}'
+    );
+
+    res.json({
+      success: true,
+      scanId: msgId,
+      subject,
+      sender: senderEmail,
+      ...threatReport
+    });
+  } catch (err) {
+    console.error('EML upload parsing error:', err);
+    res.status(500).json({ error: 'Failed to parse .EML file: ' + err.message });
+  }
 });
 
 // ── Connect via Gmail App Password (IMAP) ──
@@ -256,6 +367,12 @@ router.post('/admin/email-scanner/connect-imap', requireAuth, async (req, res) =
 
   if (cleanPass.length < 16) {
     return res.redirect('/admin/email-scanner?oauth_error=' + encodeURIComponent('Google App Passwords are 16 characters long. Generate one at myaccount.google.com/apppasswords'));
+  }
+
+  // Pre-flight check: verify credentials against Gmail IMAP before saving to DB!
+  const verifyResult = await verifyImapConnection(cleanEmail, cleanPass);
+  if (!verifyResult.success) {
+    return res.redirect('/admin/email-scanner?oauth_error=' + encodeURIComponent(verifyResult.error));
   }
 
   // Encrypt password before storing in database
@@ -282,13 +399,13 @@ router.post('/admin/email-scanner/connect-imap', requireAuth, async (req, res) =
     accountId = Number(info.lastInsertRowid);
   }
 
-  // Run fast direct scan
+  // Run initial scan
   try {
-    await fetchAndScanImapEmails(cleanEmail, cleanPass, accountId, 8);
-    res.redirect('/admin/email-scanner?connected=true');
+    const reports = await fetchAndScanImapEmails(cleanEmail, cleanPass, accountId, 10);
+    res.redirect('/admin/email-scanner?connected=true&scanned=' + reports.length);
   } catch (scanErr) {
     console.error('IMAP scan error:', scanErr.message);
-    res.redirect('/admin/email-scanner?oauth_error=' + encodeURIComponent('Connected, but scan encountered: ' + scanErr.message));
+    res.redirect('/admin/email-scanner?oauth_error=' + encodeURIComponent('Account linked, but scan encountered: ' + scanErr.message));
   }
 });
 
@@ -301,6 +418,13 @@ router.post('/admin/email-scanner/scan', requireAuth, async (req, res) => {
     }
 
     const decryptedToken = decryptToken(account.access_token);
+    if (!decryptedToken) {
+      return res.status(400).json({ error: 'Could not decrypt stored credentials. Please reconnect your account.' });
+    }
+
+    if (account.status === 'auth_failed') {
+      return res.status(400).json({ error: 'Gmail credentials failed authentication. Please reconnect using a fresh App Password.' });
+    }
 
     if (account.refresh_token === 'imap') {
       // IMAP scan using decrypted App Password
@@ -358,12 +482,14 @@ router.post('/admin/email-scanner/scan-text', requireAuth, (req, res) => {
         account_id, message_id, thread_id, sender, sender_name, recipient,
         subject, date, snippet, body_text, summary, threat_score, threat_level,
         is_phishing, phishing_reasons, malicious_links, suspicious_attachments,
-        leaked_secrets, auth_issues, scanned_at
+        leaked_secrets, auth_issues, classification_category, classification_confidence,
+        classification_details, scanned_at
       ) VALUES (
         ?, ?, NULL, ?, ?, 'me@local',
         ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?,
         ?, ?, ?, ?,
-        ?, ?, CURRENT_TIMESTAMP
+        ?, ?, ?, ?,
+        ?, CURRENT_TIMESTAMP
       )
     `).run(
       account ? account.id : null,
@@ -381,7 +507,10 @@ router.post('/admin/email-scanner/scan-text', requireAuth, (req, res) => {
       threatReport.malicious_links,
       threatReport.suspicious_attachments,
       threatReport.leaked_secrets,
-      threatReport.auth_issues
+      threatReport.auth_issues,
+      threatReport.classification_category || 'legitimate',
+      threatReport.classification_confidence || 0,
+      threatReport.classification_details || '{}'
     );
 
     res.json({
@@ -390,6 +519,7 @@ router.post('/admin/email-scanner/scan-text', requireAuth, (req, res) => {
       threat_score: threatReport.threat_score,
       threat_level: threatReport.threat_level,
       is_phishing: Boolean(threatReport.is_phishing),
+      classification: threatReport.classification,
       phishing_reasons: JSON.parse(threatReport.phishing_reasons || '[]'),
       malicious_links: JSON.parse(threatReport.malicious_links || '[]'),
       suspicious_attachments: JSON.parse(threatReport.suspicious_attachments || '[]'),
@@ -441,6 +571,9 @@ router.get('/admin/email-scanner/email/:id', requireAuth, (req, res) => {
     leaked_secrets: JSON.parse(scan.leaked_secrets || '[]'),
     auth_issues: JSON.parse(scan.auth_issues || '[]'),
     summary: JSON.parse(scan.summary || '{}'),
+    classification_category: scan.classification_category,
+    classification_confidence: scan.classification_confidence,
+    classification_details: scan.classification_details ? JSON.parse(scan.classification_details) : null,
     scanned_at: scan.scanned_at,
     forensicReport
   });
@@ -462,7 +595,7 @@ router.get('/admin/email-scanner/report/:id', requireAuth, (req, res) => {
 });
 
 // ── Disconnect Gmail Account ──
-router.post('/admin/email-scanner/disconnect', requireAuth, (req, res) => {
+router.post('/admin/email-scanner/disconnect', requireAuth, requireAdmin, (req, res) => {
   const account = db.prepare('SELECT id FROM email_accounts WHERE user_id = ?').get(req.session.userId);
   if (account) {
     db.prepare('DELETE FROM email_scans WHERE account_id = ?').run(account.id);
@@ -472,7 +605,7 @@ router.post('/admin/email-scanner/disconnect', requireAuth, (req, res) => {
 });
 
 // ── Clear Scan Reports Scoped to User ──
-router.post('/admin/email-scanner/clear', requireAuth, (req, res) => {
+router.post('/admin/email-scanner/clear', requireAuth, requireAdmin, (req, res) => {
   const account = db.prepare('SELECT id FROM email_accounts WHERE user_id = ?').get(req.session.userId);
   if (account) {
     db.prepare('DELETE FROM email_scans WHERE account_id = ?').run(account.id);
@@ -481,6 +614,155 @@ router.post('/admin/email-scanner/clear', requireAuth, (req, res) => {
     db.prepare('DELETE FROM email_scans WHERE account_id IS NULL').run();
   }
   res.redirect('/admin/email-scanner');
+});
+
+// ══════════════════════════════════════════════════════════════
+// ── EMAIL CLASSIFIER STUDIO & TELEMETRY ROUTES ──
+// ══════════════════════════════════════════════════════════════
+
+// ── View Email Classifier Studio ──
+router.get('/admin/email-classifier', requireAuth, (req, res) => {
+  const totalScans = db.prepare('SELECT COUNT(*) as c FROM email_scans').get().c;
+  const totalClassified = db.prepare('SELECT COUNT(*) as c FROM email_scans WHERE classification_category IS NOT NULL').get().c;
+  const phishingCount = db.prepare("SELECT COUNT(*) as c FROM email_scans WHERE classification_category = 'phishing'").get().c;
+  const becCount = db.prepare("SELECT COUNT(*) as c FROM email_scans WHERE classification_category = 'bec_fraud'").get().c;
+  const malwareCount = db.prepare("SELECT COUNT(*) as c FROM email_scans WHERE classification_category = 'malware'").get().c;
+  const spamCount = db.prepare("SELECT COUNT(*) as c FROM email_scans WHERE classification_category = 'spam'").get().c;
+  const legitCount = db.prepare("SELECT COUNT(*) as c FROM email_scans WHERE classification_category = 'legitimate'").get().c;
+  const unclassifiedCount = db.prepare('SELECT COUNT(*) as c FROM email_scans WHERE classification_category IS NULL').get().c;
+
+  const recentScans = db.prepare(`
+    SELECT id, sender, sender_name, recipient, subject, snippet, date,
+           threat_score, threat_level, is_phishing,
+           classification_category, classification_confidence, classification_details,
+           scanned_at
+    FROM email_scans
+    ORDER BY scanned_at DESC
+    LIMIT 30
+  `).all();
+
+  res.render('admin/email-classifier', {
+    user: req.session,
+    stats: {
+      total: totalScans,
+      classified: totalClassified,
+      phishing: phishingCount,
+      bec_fraud: becCount,
+      malware: malwareCount,
+      spam: spamCount,
+      legitimate: legitCount,
+      unclassified: unclassifiedCount
+    },
+    recentScans,
+    categories: emailClassifier.CATEGORIES,
+    benchmarks: emailClassifier.BENCHMARK_EMAILS
+  });
+});
+
+// ── Interactive Live Classification AJAX Endpoint ──
+router.post('/admin/email-classifier/classify', requireAuth, (req, res) => {
+  try {
+    const { subject, body, sender, senderName, recipient, headers, attachments } = req.body;
+
+    let parsedHeaders = {};
+    if (typeof headers === 'string' && headers.trim()) {
+      try {
+        parsedHeaders = JSON.parse(headers);
+      } catch (e) {
+        headers.split('\n').forEach(line => {
+          const idx = line.indexOf(':');
+          if (idx !== -1) {
+            parsedHeaders[line.slice(0, idx).trim().toLowerCase()] = line.slice(idx + 1).trim();
+          }
+        });
+      }
+    } else if (typeof headers === 'object' && headers !== null) {
+      parsedHeaders = headers;
+    }
+
+    let parsedAttachments = [];
+    if (Array.isArray(attachments)) {
+      parsedAttachments = attachments;
+    } else if (typeof attachments === 'string' && attachments.trim()) {
+      parsedAttachments = attachments.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    const result = emailClassifier.classifyEmail({
+      subject: subject || '',
+      body_text: body || '',
+      body: body || '',
+      sender: sender || '',
+      sender_name: senderName || '',
+      recipient: recipient || '',
+      headers: parsedHeaders,
+      attachments: parsedAttachments
+    });
+
+    res.json({
+      success: true,
+      result
+    });
+  } catch (error) {
+    console.error('Email classifier interactive test error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Classification execution failed'
+    });
+  }
+});
+
+// ── Batch Reclassify All Historical Scans ──
+router.post('/admin/email-classifier/reclassify-all', requireAuth, requireAdmin, (req, res) => {
+  try {
+    const scans = db.prepare('SELECT id, sender, sender_name, recipient, subject, body_text, snippet, suspicious_attachments, auth_issues FROM email_scans').all();
+    const updateStmt = db.prepare(`
+      UPDATE email_scans
+      SET classification_category = ?,
+          classification_confidence = ?,
+          classification_details = ?
+      WHERE id = ?
+    `);
+
+    let updatedCount = 0;
+    for (const scan of scans) {
+      let attachments = [];
+      try {
+        if (scan.suspicious_attachments) {
+          const parsed = JSON.parse(scan.suspicious_attachments);
+          attachments = Array.isArray(parsed) ? parsed.map(a => typeof a === 'string' ? a : a.filename || a.name || '') : [];
+        }
+      } catch (e) {}
+
+      const classification = emailClassifier.classifyEmail({
+        subject: scan.subject || '',
+        body_text: scan.body_text || scan.snippet || '',
+        sender: scan.sender || '',
+        sender_name: scan.sender_name || '',
+        recipient: scan.recipient || '',
+        attachments
+      });
+
+      updateStmt.run(
+        classification.category,
+        classification.confidence,
+        JSON.stringify(classification),
+        scan.id
+      );
+      updatedCount++;
+    }
+
+    res.json({
+      success: true,
+      count: updatedCount,
+      message: `Successfully classified ${updatedCount} historical email scans.`
+    });
+  } catch (error) {
+    console.error('Reclassify all error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Reclassification failed'
+    });
+  }
 });
 
 module.exports = router;

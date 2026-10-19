@@ -18,6 +18,8 @@ const newsletterRouter = require('./routes/newsletter');
 const adminRouter = require('./routes/admin');
 const emailScannerRouter = require('./routes/emailScanner');
 const aiChatRouter = require('./routes/aiChat');
+const extensionApiRouter = require('./routes/extensionApi');
+const emailWriterRouter = require('./routes/emailWriterApi');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,7 +35,9 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrcAttr: ["'self'", "'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        styleSrcAttr: ["'self'", "'unsafe-inline'"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:"],
         mediaSrc: ["'self'", "https://d8j0ntlcm91z4.cloudfront.net"],
@@ -91,14 +95,18 @@ app.use('/auth', authLimiter, authRouter);
 app.use('/api/contact', formLimiter, contactRouter);
 app.use('/api/newsletter', formLimiter, newsletterRouter);
 app.use('/api/ai-chat', aiLimiter, aiChatRouter);
+app.use('/api/extension', extensionApiRouter);
+app.use('/api/classifier', extensionApiRouter);
+app.use('/api/writer', emailWriterRouter);
+app.use('/', emailWriterRouter);
 app.use('/admin', adminRouter);
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).render('login', {
-    errors: ['404 - Page not found'],
-    values: {}
-  });
+  if (req.xhr || req.headers.accept?.includes('application/json')) {
+    return res.status(404).json({ error: 'Endpoint not found' });
+  }
+  res.status(404).render('404');
 });
 
 // Error handler
@@ -107,9 +115,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
+const { initBackgroundScanner } = require('./services/backgroundScanner');
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 CyberSec full-stack CRM running at http://localhost:${PORT}`);
+  initBackgroundScanner();
 });
 
 module.exports = app;

@@ -99,6 +99,8 @@
             <a href="/admin/leads">◆ Leads</a>
             <a href="/admin/newsletter">◆ Newsletter</a>
             <a href="/admin/email-scanner">◆ Email Scanner</a>
+            <a href="/admin/email-classifier">◆ Email Classifier</a>
+            <a href="/admin/email-writer">◆ AI Email Writer</a>
             <div class="sep"></div>
             <a href="/admin/settings" class="active">◆ Settings</a>
             <a href="/" target="_blank">◆ View Site</a>
@@ -149,7 +151,7 @@
             <p class="sec-desc">Update your administrator password.</p>
 
             <div class="user-info">
-                <div>Username strong: <strong><%= adminUser?.username || user.username %></strong></div>
+                <div>Username: <strong><%= adminUser?.username || user.username %></strong></div>
                 <div>Email: <strong><%= adminUser?.email || 'admin@cybersec.local' %></strong></div>
             </div>
 

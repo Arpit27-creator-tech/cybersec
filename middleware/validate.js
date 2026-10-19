@@ -11,19 +11,8 @@ function isValidEmail(email) {
 
 function sanitize(str) {
   if (typeof str !== 'string') return '';
-  return str
-    .trim()
-    .replace(/[&<>"'/]/g, (char) => {
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#x27;',
-        '/': '&#x2F;'
-      };
-      return map[char] || char;
-    });
+  // Strip control characters while preserving valid input
+  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
 }
 
 /**
@@ -38,7 +27,21 @@ function validateContact(req, res, next) {
   if (!message || sanitize(message).length < 10) errors.push('Message is required (min 10 characters)');
 
   if (errors.length > 0) {
-    return res.status(400).json({ errors });
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(400).json({ errors });
+    }
+    return res.status(400).render('contact', {
+      errors,
+      values: {
+        name: req.body.name || '',
+        email: req.body.email || '',
+        company: req.body.company || '',
+        phone: req.body.phone || '',
+        message: req.body.message || ''
+      },
+      success: null,
+      source: req.body.source || 'contact_page'
+    });
   }
 
   // Sanitize inputs

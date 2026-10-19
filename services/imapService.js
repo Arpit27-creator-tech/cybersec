@@ -9,7 +9,7 @@ const { scanEmailThreats } = require('./threatScanner');
 function createImapClient(email, appPassword) {
   const cleanPassword = (appPassword || '').replace(/\s+/g, '');
 
-  return new ImapFlow({
+  const client = new ImapFlow({
     host: 'imap.gmail.com',
     port: 993,
     secure: true,
@@ -28,6 +28,39 @@ function createImapClient(email, appPassword) {
     socketTimeout: 30000,
     connectionTimeout: 15000
   });
+
+  // Attach error handler to prevent unhandled 'error' events from crashing the process
+  client.on('error', (err) => {
+    // Handled quietly; connection errors are caught in async methods
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[ImapFlow Client Warning]:', err?.message || err);
+    }
+  });
+
+  return client;
+}
+
+/**
+ * Verify IMAP credentials before saving account to database
+ */
+async function verifyImapConnection(email, appPassword) {
+  const client = createImapClient(email, appPassword);
+  try {
+    await client.connect();
+    const lock = await client.getMailboxLock('INBOX');
+    lock.release();
+    try { await client.logout(); } catch (_) {}
+    return { success: true };
+  } catch (err) {
+    try { await client.logout(); } catch (_) {}
+    let errorDetail = 'Could not connect to Gmail IMAP.';
+    if (err.response && err.response.includes('AUTHENTICATIONFAILED')) {
+      errorDetail = 'Gmail rejected the App Password (AUTHENTICATIONFAILED). Please ensure: 1) IMAP is enabled in Gmail Settings (mail.google.com -> Settings -> Forwarding and POP/IMAP -> Enable IMAP -> Save Changes), and 2) A valid 16-character App Password was generated at myaccount.google.com/apppasswords.';
+    } else {
+      errorDetail = err.message || errorDetail;
+    }
+    return { success: false, error: errorDetail };
+  }
 }
 
 /**
@@ -61,8 +94,17 @@ async function fetchAndScanImapEmails(email, appPassword, accountId, maxResults 
   try {
     await client.connect();
   } catch (connErr) {
-    throw new Error('Could not connect to Gmail IMAP server (Port 993). Please make sure "IMAP Access" is turned ON in your Gmail Settings: mail.google.com -> Settings -> Forwarding and POP/IMAP -> Enable IMAP -> Save Changes. Or generate a new 16-character App Password at myaccount.google.com/apppasswords.');
-  }
+      if (accountId) {
+        db.prepare("UPDATE email_accounts SET status = 'auth_failed' WHERE id = ?").run(accountId);
+      }
+      let msg = 'Could not connect to Gmail IMAP server (Port 993). ';
+      if (connErr.response && connErr.response.includes('AUTHENTICATIONFAILED')) {
+        msg = 'Gmail rejected the App Password (AUTHENTICATIONFAILED). Please ensure: 1) IMAP is enabled in Gmail Settings (mail.google.com -> Settings -> Forwarding and POP/IMAP -> Enable IMAP -> Save Changes), and 2) A valid 16-character App Password was generated at myaccount.google.com/apppasswords.';
+      } else {
+        msg += (connErr.message || 'Connection failed') + '. Ensure IMAP is enabled in your Gmail settings.';
+      }
+      throw new Error(msg);
+    }
 
   const scannedReports = [];
 
@@ -227,5 +269,6 @@ async function fetchAndScanImapEmails(email, appPassword, accountId, maxResults 
 }
 
 module.exports = {
-  fetchAndScanImapEmails
+  fetchAndScanImapEmails,
+  verifyImapConnection
 };

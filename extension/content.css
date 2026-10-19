@@ -1,0 +1,908 @@
+/**
+ * CyberSec Email Threat Radar & AI Writer — Gmail Content Stylesheet
+ * 100% Brand Parity with CyberSec Web Platform & Admin Design System
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --cs-font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --cs-font-mono: 'JetBrains Mono', monospace, ui-monospace;
+  --cs-red: #c81b1c;
+  --cs-red-hover: #b01617;
+  --cs-red-glow: rgba(200, 27, 28, 0.35);
+  --cs-bg: #08080a;
+  --cs-card: #111115;
+  --cs-card-alt: #16161c;
+  --cs-border: rgba(255, 255, 255, 0.08);
+  --cs-border-hover: rgba(255, 255, 255, 0.2);
+  --cs-border-active: rgba(200, 27, 28, 0.5);
+  --cs-text-main: #ffffff;
+  --cs-text-sub: #d4d4d8;
+  --cs-text-muted: #71717a;
+  --cs-safe: #10b981;
+  --cs-warn: #f59e0b;
+  --cs-crit: #ef4444;
+  --cs-cyan: #00e5ff;
+}
+
+/* ═══════════════════════════════════════════════════
+   1. IN-EMAIL SCAN TRIGGER BUTTON
+   ═══════════════════════════════════════════════════ */
+
+.cybersec-scan-trigger-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  margin-left: 10px !important;
+  vertical-align: middle !important;
+}
+
+.cybersec-scan-trigger {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  background: var(--cs-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-main) !important;
+  padding: 6px 13px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.2px !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  user-select: none !important;
+  outline: none !important;
+}
+
+.cybersec-scan-trigger:hover {
+  background: var(--cs-card-alt) !important;
+  border-color: var(--cs-red) !important;
+  box-shadow: 0 0 12px var(--cs-red-glow) !important;
+  transform: translateY(-1px) !important;
+}
+
+.cybersec-scan-trigger:active {
+  transform: translateY(0) !important;
+}
+
+.cybersec-trigger-svg {
+  width: 14px !important;
+  height: 14px !important;
+  flex-shrink: 0 !important;
+}
+
+.cybersec-btn-loading {
+  opacity: 0.8 !important;
+  cursor: wait !important;
+}
+
+.cybersec-spinner {
+  width: 12px !important;
+  height: 12px !important;
+  border: 2px solid rgba(255, 255, 255, 0.2) !important;
+  border-top-color: var(--cs-red) !important;
+  border-radius: 50% !important;
+  animation: cs-spin 0.7s linear infinite !important;
+}
+
+@keyframes cs-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════
+   2. GMAIL COMPOSE TOOLBAR AI WRITER TRIGGER BUTTON
+   ═══════════════════════════════════════════════════ */
+
+.cybersec-writer-trigger {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  background: var(--cs-red) !important;
+  border: none !important;
+  color: #ffffff !important;
+  padding: 0 14px !important;
+  height: 36px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.2px !important;
+  cursor: pointer !important;
+  margin-left: 8px !important;
+  box-shadow: 0 0 12px var(--cs-red-glow) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  user-select: none !important;
+  vertical-align: middle !important;
+  outline: none !important;
+}
+
+.cybersec-writer-trigger:hover {
+  background: var(--cs-red-hover) !important;
+  box-shadow: 0 0 20px rgba(200, 27, 28, 0.55) !important;
+  transform: translateY(-1px) !important;
+}
+
+.cybersec-writer-trigger:active {
+  transform: translateY(0) !important;
+}
+
+.cybersec-writer-trigger svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   3. IN-EMAIL THREAT DOSSIER CARD
+   ═══════════════════════════════════════════════════ */
+
+.cybersec-threat-card {
+  margin: 14px 0 18px 0 !important;
+  padding: 18px 22px !important;
+  border-radius: 2px !important;
+  background: var(--cs-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.75) !important;
+  font-family: var(--cs-font-sans) !important;
+  color: var(--cs-text-main) !important;
+  box-sizing: border-box !important;
+  animation: cs-slide-down 0.25s ease-out !important;
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+@keyframes cs-slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cybersec-threat-card.cybersec-card-critical {
+  border-color: rgba(200, 27, 28, 0.6) !important;
+  box-shadow: 0 0 25px rgba(200, 27, 28, 0.2), inset 0 0 15px rgba(200, 27, 28, 0.05) !important;
+}
+
+.cybersec-threat-card.cybersec-card-warning {
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15) !important;
+}
+
+.cybersec-threat-card.cybersec-card-safe {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.cybersec-card-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-bottom: 12px !important;
+  border-bottom: 1px solid var(--cs-border) !important;
+  margin-bottom: 14px !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+}
+
+.cybersec-card-badge-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.cybersec-status-pill {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  padding: 4px 10px !important;
+  border-radius: 2px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.cybersec-status-pill.badge-critical {
+  background: rgba(200, 27, 28, 0.15) !important;
+  color: var(--cs-red) !important;
+  border: 1px solid rgba(200, 27, 28, 0.4) !important;
+}
+
+.cybersec-status-pill.badge-warning {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: var(--cs-warn) !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+}
+
+.cybersec-status-pill.badge-safe {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: var(--cs-safe) !important;
+  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+.cybersec-score-meter {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 3px !important;
+  font-family: var(--cs-font-mono) !important;
+}
+
+.cybersec-score-num {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+
+.cybersec-score-num.score-danger { color: var(--cs-red) !important; }
+.cybersec-score-num.score-warn { color: var(--cs-warn) !important; }
+.cybersec-score-num.score-safe { color: var(--cs-safe) !important; }
+
+.cybersec-score-denom {
+  font-size: 11px !important;
+  color: var(--cs-text-muted) !important;
+}
+
+.cybersec-card-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.cybersec-action-link,
+.cybersec-card-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-sub) !important;
+  padding: 5px 10px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+  text-decoration: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.cybersec-action-link:hover,
+.cybersec-card-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+}
+
+.cybersec-engine-tag {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 10px !important;
+  color: var(--cs-text-muted) !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  margin-left: auto !important;
+}
+
+.cybersec-card-section {
+  margin-top: 10px !important;
+  padding: 10px 12px !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid var(--cs-border) !important;
+  border-radius: 2px !important;
+}
+
+.cybersec-section-title {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  color: var(--cs-text-muted) !important;
+  margin-bottom: 6px !important;
+}
+
+.cybersec-flags-list {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 12px !important;
+  color: var(--cs-text-sub) !important;
+}
+
+.cybersec-flags-list li {
+  margin-bottom: 4px !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   4. IN-GMAIL AI WRITER SIDEBAR OVERLAY
+   ═══════════════════════════════════════════════════ */
+
+.cybersec-writer-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 2147483640 !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: flex-end !important;
+  background: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(4px) !important;
+  animation: cs-fade-in 0.2s ease-out !important;
+}
+
+@keyframes cs-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.csw-panel {
+  width: 420px !important;
+  max-width: 95vw !important;
+  height: 100% !important;
+  background: var(--cs-bg) !important;
+  border-left: 1px solid var(--cs-border) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.85) !important;
+  animation: cs-slide-left 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  font-family: var(--cs-font-sans) !important;
+  color: var(--cs-text-main) !important;
+  box-sizing: border-box !important;
+}
+
+@keyframes cs-slide-left {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.csw-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 20px !important;
+  background: var(--cs-card) !important;
+  border-bottom: 1px solid var(--cs-border) !important;
+  flex-shrink: 0 !important;
+}
+
+.csw-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.csw-brand-svg {
+  width: 22px !important;
+  height: 22px !important;
+  flex-shrink: 0 !important;
+  filter: drop-shadow(0 0 6px var(--cs-red-glow)) !important;
+}
+
+.csw-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.4px !important;
+  color: #ffffff !important;
+  line-height: 1.1 !important;
+}
+
+.csw-subtitle {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 10px !important;
+  color: var(--cs-text-muted) !important;
+  letter-spacing: 0.4px !important;
+  margin-top: 2px !important;
+}
+
+.csw-close {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-sub) !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 2px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  transition: all 0.15s !important;
+  padding: 0 !important;
+}
+
+.csw-close:hover {
+  background: rgba(200, 27, 28, 0.15) !important;
+  border-color: var(--cs-red) !important;
+  color: #ffffff !important;
+}
+
+.csw-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 18px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent !important;
+}
+
+.csw-body::-webkit-scrollbar { width: 4px; }
+.csw-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.12); border-radius: 2px; }
+
+.csw-section-label {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  color: var(--cs-text-muted) !important;
+  margin-bottom: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.csw-chips {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)) !important;
+  gap: 6px !important;
+  margin-bottom: 8px !important;
+}
+
+.csw-chip {
+  background: var(--cs-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-sub) !important;
+  padding: 8px 10px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+  text-align: center !important;
+}
+
+.csw-chip:hover {
+  background: var(--cs-card-alt) !important;
+  border-color: var(--cs-border-hover) !important;
+  color: #ffffff !important;
+}
+
+.csw-chip.active {
+  background: rgba(200, 27, 28, 0.15) !important;
+  border-color: var(--cs-red) !important;
+  color: #ffffff !important;
+}
+
+.csw-textarea {
+  width: 100% !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  padding: 10px 12px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  resize: vertical !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.2s !important;
+}
+
+.csw-textarea:focus {
+  border-color: var(--cs-red) !important;
+  box-shadow: 0 0 10px var(--cs-red-glow) !important;
+}
+
+.csw-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.csw-char-count {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 10px !important;
+  color: var(--cs-text-muted) !important;
+  text-align: right !important;
+  margin-top: 4px !important;
+  margin-bottom: 12px !important;
+}
+
+.csw-controls-row {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap: 8px !important;
+  margin-bottom: 12px !important;
+}
+
+.csw-control-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+
+.csw-micro-label {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 10px !important;
+  color: var(--cs-text-muted) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.csw-select {
+  background: var(--cs-card) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: var(--cs-text-main) !important;
+  padding: 7px 8px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 11px !important;
+  outline: none !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.csw-select:focus {
+  border-color: var(--cs-red) !important;
+}
+
+.csw-optional-row {
+  display: flex !important;
+  gap: 8px !important;
+  margin-bottom: 14px !important;
+}
+
+.csw-input-sm {
+  flex: 1 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  padding: 8px 10px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 11px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.csw-input-sm:focus {
+  border-color: var(--cs-red) !important;
+}
+
+.csw-input-sm::placeholder {
+  color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.csw-input {
+  width: 100% !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  padding: 9px 12px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 12px !important;
+  outline: none !important;
+  box-sizing: border-box !important;
+}
+
+.csw-input:focus {
+  border-color: var(--cs-red) !important;
+}
+
+.csw-error {
+  background: rgba(200, 27, 28, 0.1) !important;
+  border: 1px solid var(--cs-red) !important;
+  color: #fca5a5 !important;
+  padding: 9px 12px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 12px !important;
+}
+
+.csw-btn-generate {
+  width: 100% !important;
+  background: var(--cs-red) !important;
+  border: none !important;
+  color: #ffffff !important;
+  padding: 12px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-sans) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-shadow: 0 0 16px var(--cs-red-glow) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  margin-bottom: 6px !important;
+}
+
+.csw-btn-generate:hover:not(:disabled) {
+  background: var(--cs-red-hover) !important;
+  box-shadow: 0 0 24px rgba(200, 27, 28, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+.csw-btn-generate:disabled {
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+}
+
+.csw-btn {
+  padding: 8px 14px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-sans) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+}
+
+.csw-btn-primary {
+  background: var(--cs-red) !important;
+  border: none !important;
+  color: #fff !important;
+}
+
+.csw-btn-primary:hover {
+  background: var(--cs-red-hover) !important;
+}
+
+.csw-btn-ghost {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-sub) !important;
+}
+
+.csw-btn-ghost:hover {
+  color: #ffffff !important;
+  border-color: var(--cs-border-hover) !important;
+}
+
+.csw-gen-spinner {
+  width: 14px !important;
+  height: 14px !important;
+  border: 2px solid rgba(255, 255, 255, 0.25) !important;
+  border-top-color: #ffffff !important;
+  border-radius: 50% !important;
+  animation: cs-spin 0.7s linear infinite !important;
+  flex-shrink: 0 !important;
+  display: inline-block !important;
+}
+
+.csw-output {
+  margin-top: 8px !important;
+  padding-top: 14px !important;
+  border-top: 1px solid var(--cs-border) !important;
+}
+
+.csw-subj-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  margin-bottom: 10px !important;
+}
+
+.csw-subj-pill {
+  background: var(--cs-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-sub) !important;
+  padding: 8px 12px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+  line-height: 1.4 !important;
+}
+
+.csw-subj-pill:hover {
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.csw-subj-pill.active {
+  border-color: var(--cs-red) !important;
+  background: rgba(200, 27, 28, 0.12) !important;
+  color: #ffffff !important;
+}
+
+.csw-body-editor {
+  width: 100% !important;
+  background: var(--cs-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: #ffffff !important;
+  padding: 12px 14px !important;
+  border-radius: 2px !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  resize: vertical !important;
+  outline: none !important;
+  font-family: var(--cs-font-sans) !important;
+  box-sizing: border-box !important;
+  min-height: 200px !important;
+}
+
+.csw-body-editor:focus {
+  border-color: var(--cs-red) !important;
+}
+
+.csw-word-count {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 10px !important;
+  color: var(--cs-text-muted) !important;
+  font-weight: normal !important;
+  margin-left: 8px !important;
+}
+
+.csw-refine-chips {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  margin-bottom: 12px !important;
+}
+
+.csw-refine-chip {
+  background: var(--cs-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-muted) !important;
+  padding: 4px 10px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 10px !important;
+  cursor: pointer !important;
+}
+
+.csw-refine-chip:hover {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.csw-engine-tag {
+  font-size: 10px !important;
+  color: var(--cs-text-muted) !important;
+  font-family: var(--cs-font-mono) !important;
+  margin: 8px 0 !important;
+  text-align: right !important;
+}
+
+.csw-action-row {
+  display: flex !important;
+  gap: 8px !important;
+  margin-top: 10px !important;
+}
+
+.csw-btn-insert {
+  flex: 1 !important;
+  background: var(--cs-red) !important;
+  border: none !important;
+  color: #ffffff !important;
+  padding: 11px 16px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  box-shadow: 0 0 14px var(--cs-red-glow) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.csw-btn-insert:hover {
+  background: var(--cs-red-hover) !important;
+  box-shadow: 0 0 20px rgba(200, 27, 28, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+.csw-btn-copy {
+  background: var(--cs-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  color: var(--cs-text-sub) !important;
+  padding: 11px 16px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.csw-btn-copy:hover {
+  background: var(--cs-card-alt) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.csw-footer-actions {
+  margin-top: 16px !important;
+  padding-top: 12px !important;
+  border-top: 1px solid var(--cs-border) !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.csw-ghost-link {
+  background: none !important;
+  border: none !important;
+  color: var(--cs-text-muted) !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+}
+
+.csw-ghost-link:hover {
+  color: var(--cs-red) !important;
+}
+
+.csw-key-notice {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+  border: 1px solid rgba(245, 158, 11, 0.3) !important;
+  border-radius: 2px !important;
+  padding: 14px !important;
+  margin-bottom: 14px !important;
+  text-align: center !important;
+}
+
+.csw-key-notice-text {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 11px !important;
+  color: var(--cs-warn) !important;
+  line-height: 1.4 !important;
+}
+
+.csw-key-notice-btn {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  color: var(--cs-warn) !important;
+  padding: 6px 14px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-sans) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.csw-key-setup {
+  background: var(--cs-card) !important;
+  border: 1px solid var(--cs-border) !important;
+  border-radius: 2px !important;
+  padding: 14px !important;
+  margin-bottom: 14px !important;
+}
+
+.csw-key-help {
+  font-family: var(--cs-font-mono) !important;
+  font-size: 10px !important;
+  color: var(--cs-text-muted) !important;
+  margin-top: 6px !important;
+}
+
+.csw-key-help a {
+  color: var(--cs-red) !important;
+  text-decoration: none !important;
+}
+
+.cybersec-writer-toast {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  background: var(--cs-card) !important;
+  border: 1px solid var(--cs-safe) !important;
+  color: var(--cs-safe) !important;
+  padding: 12px 18px !important;
+  border-radius: 2px !important;
+  font-family: var(--cs-font-mono) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  z-index: 2147483647 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.85), 0 0 16px rgba(16, 185, 129, 0.25) !important;
+  animation: cs-slide-down 0.2s ease-out !important;
+}

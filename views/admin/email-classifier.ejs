@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Email Classifier Studio — CyberSec Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @font-face{font-family:'SG';src:local('Space Grotesk');font-display:swap}
+        @font-face{font-family:'JB';src:local('JetBrains Mono');font-display:swap}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{min-height:100%;background:#08080a}
+        body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;color:#fff;font-family:'SG','Space Grotesk',sans-serif}
+        a{color:inherit;text-decoration:none}
+        :root{
+            --red:#c81b1c;--red-glow:rgba(200,27,28,.35);
+            --ink:#fff;--sub:#d4d4d8;--lab:#71717a;
+            --card:#111115;--card-alt:#16161c;--border:rgba(255,255,255,.08);--border-focus:rgba(200,27,28,.6);
+            --phishing:#ef4444;--bec:#f59e0b;--malware:#a855f7;--spam:#eab308;--legit:#10b981;
+        }
+        
+        .shell{display:flex;min-height:100vh}
+        .side{width:240px;background:#09090b;border-right:1px solid var(--border);padding:28px 20px;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+        .side-logo{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+        .side-logo svg{width:32px;height:32px}
+        .side-logo span{font-weight:700;font-size:16px;letter-spacing:-.4px}
+        .side-nav{display:flex;flex-direction:column;gap:4px}
+        .side-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);transition:all .2s;border-left:2px solid transparent}
+        .side-nav a:hover,.side-nav a.active{color:var(--ink);background:rgba(255,255,255,.04);border-left-color:var(--red)}
+        .side-nav a.active{color:var(--red)}
+        .side-nav .sep{height:1px;background:var(--border);margin:16px 0}
+        .side-bottom{margin-top:auto;padding-top:20px;border-top:1px solid var(--border)}
+        .side-user{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:12px}
+        .side-user strong{color:var(--ink);display:block;font-size:13px;margin-bottom:2px}
+        .logout-btn{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);background:none;border:1px solid var(--border);padding:8px 14px;cursor:pointer;transition:all .2s;width:100%}
+        .logout-btn:hover{color:var(--red);border-color:var(--red)}
+
+        .main{flex:1;padding:32px 36px;overflow-x:hidden}
+        
+        /* Top Header */
+        .header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;gap:20px;flex-wrap:wrap}
+        .header-title h1{font-size:26px;font-weight:700;letter-spacing:-.8px;display:flex;align-items:center;gap:10px}
+        .header-title .subtitle{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);margin-top:4px}
+        
+        .header-actions{display:flex;gap:10px;align-items:center}
+        .btn-action{
+            display:inline-flex;align-items:center;gap:8px;
+            background:var(--red);color:#fff;border:none;cursor:pointer;
+            padding:10px 18px;font-family:'SG','Space Grotesk',sans-serif;font-weight:600;font-size:13px;
+            transition:all .2s;border-radius:2px;
+        }
+        .btn-action:hover{background:#b01617;box-shadow:0 0 16px var(--red-glow)}
+        .btn-secondary{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--sub)}
+        .btn-secondary:hover{background:rgba(255,255,255,.1);color:#fff;box-shadow:none}
+        
+        /* Stat Telemetry Cards */
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+        .stat-card{background:var(--card);border:1px solid var(--border);padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+        .stat-card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.15)}
+        .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--red))}
+        .stat-label{font-family:'JB','JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--lab);margin-bottom:8px}
+        .stat-value{font-size:26px;font-weight:700;letter-spacing:-1px;display:flex;align-items:baseline;gap:6px}
+        .stat-desc{font-size:11px;color:var(--lab);margin-top:4px;font-family:'JB','JetBrains Mono',monospace}
+
+        /* Workbench Layout */
+        .studio-layout{display:grid;grid-template-columns:1.15fr 0.85fr;gap:24px;margin-bottom:36px}
+        @media (max-width:1180px){.studio-layout{grid-template-columns:1fr}}
+
+        .panel{background:var(--card);border:1px solid var(--border);padding:24px;position:relative}
+        .panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+        .panel-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px}
+        .panel-badge{font-family:'JB','JetBrains Mono',monospace;font-size:11px;padding:3px 8px;background:rgba(255,255,255,.06);color:var(--sub);border:1px solid var(--border)}
+
+        /* Benchmark Preset Chips */
+        .presets-bar{margin-bottom:20px}
+        .presets-label{font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+        .preset-chips{display:flex;flex-wrap:wrap;gap:8px}
+        .preset-chip{
+            font-family:'JB','JetBrains Mono',monospace;font-size:12px;padding:6px 12px;
+            background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--sub);
+            cursor:pointer;transition:all .15s;border-radius:2px;display:flex;align-items:center;gap:6px;
+        }
+        .preset-chip:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}
+        .preset-chip.active{border-color:var(--red);color:#fff;background:rgba(200,27,28,.15)}
+
+        /* Form Controls */
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+        .form-group{margin-bottom:14px}
+        .form-label{display:block;font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--sub);margin-bottom:6px}
+        .form-input,.form-textarea{
+            width:100%;background:#09090b;border:1px solid var(--border);color:#fff;
+            padding:10px 14px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;
+            outline:none;transition:border-color .2s;border-radius:2px;
+        }
+        .form-input:focus,.form-textarea:focus{border-color:var(--border-focus);background:#0d0d10}
+        .form-textarea{resize:vertical;min-height:160px;line-height:1.5}
+        .meta-helper{display:flex;justify-content:space-between;font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);margin-top:4px}
+
+        /* Results Display */
+        .result-empty{
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            min-height:380px;text-align:center;color:var(--lab);padding:40px 20px;
+        }
+        .result-empty svg{width:48px;height:48px;margin-bottom:14px;opacity:.4}
+        .result-empty p{font-size:14px;max-width:320px;line-height:1.5}
+
+        .verdict-box{
+            background:var(--card-alt);border:1px solid var(--border);padding:20px;
+            margin-bottom:20px;position:relative;overflow:hidden;
+        }
+        .verdict-header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+        .verdict-tag{
+            display:inline-flex;align-items:center;gap:8px;padding:6px 14px;
+            font-family:'JB','JetBrains Mono',monospace;font-weight:700;font-size:14px;
+            border-radius:2px;text-transform:uppercase;letter-spacing:.6px;
+        }
+        .tag-phishing{background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#ef4444;box-shadow:0 0 16px rgba(239,68,68,.25)}
+        .tag-bec_fraud{background:rgba(245,158,11,.15);border:1px solid #f59e0b;color:#f59e0b;box-shadow:0 0 16px rgba(245,158,11,.25)}
+        .tag-malware{background:rgba(168,85,247,.15);border:1px solid #a855f7;color:#a855f7;box-shadow:0 0 16px rgba(168,85,247,.25)}
+        .tag-spam{background:rgba(234,179,8,.15);border:1px solid #eab308;color:#eab308;box-shadow:0 0 16px rgba(234,179,8,.25)}
+        .tag-legitimate{background:rgba(16,185,129,.15);border:1px solid #10b981;color:#10b981;box-shadow:0 0 16px rgba(16,185,129,.25)}
+
+        .confidence-meter{text-align:right}
+        .confidence-val{font-size:28px;font-weight:700;letter-spacing:-1px}
+        .confidence-sub{font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab)}
+
+        .verdict-action{
+            margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.06);
+            display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub);
+        }
+        .verdict-action-pill{
+            font-family:'JB','JetBrains Mono',monospace;font-size:11px;font-weight:600;
+            padding:3px 8px;background:rgba(255,255,255,.08);color:#fff;border-radius:2px;
+        }
+
+        /* Probability Bars */
+        .prob-section{margin-bottom:20px}
+        .section-subhead{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;display:flex;justify-content:space-between}
+        .prob-row{margin-bottom:10px}
+        .prob-meta{display:flex;justify-content:space-between;font-family:'JB','JetBrains Mono',monospace;font-size:12px;margin-bottom:4px}
+        .prob-bar{height:7px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;position:relative}
+        .prob-fill{height:100%;transition:width .4s ease;border-radius:2px}
+
+        /* Behavioral Risk Cards */
+        .behavioral-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+        .behavioral-card{background:#0d0d10;border:1px solid var(--border);padding:10px 12px;border-radius:2px}
+        .b-card-title{font-family:'JB','JetBrains Mono',monospace;font-size:10px;color:var(--lab);text-transform:uppercase}
+        .b-card-val{font-size:18px;font-weight:700;margin:4px 0 2px}
+        .b-bar{height:4px;background:rgba(255,255,255,.06);border-radius:1px;overflow:hidden}
+        .b-fill{height:100%;background:var(--red);transition:width .3s}
+
+        /* Signals & Badges */
+        .signals-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+        .signal-pill{
+            font-family:'JB','JetBrains Mono',monospace;font-size:11px;padding:3px 8px;
+            background:rgba(200,27,28,.1);border:1px solid rgba(200,27,28,.3);color:#fca5a5;
+            display:inline-flex;align-items:center;gap:4px;
+        }
+        .rationale-text{
+            font-size:13px;line-height:1.5;color:var(--sub);background:#0d0d10;border:1px solid var(--border);
+            padding:12px 14px;border-radius:2px;
+        }
+
+        /* Scans Table */
+        .table-wrap{background:var(--card);border:1px solid var(--border);overflow-x:auto}
+        .custom-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+        .custom-table th{
+            font-family:'JB','JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.6px;
+            color:var(--lab);padding:14px 18px;border-bottom:1px solid var(--border);background:#0c0c0e;
+        }
+        .custom-table td{padding:14px 18px;border-bottom:1px solid var(--border);vertical-align:middle}
+        .custom-table tr:hover td{background:rgba(255,255,255,.02)}
+        .subj-cell{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+        .sender-cell{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        
+        .pill-mini{
+            display:inline-flex;align-items:center;gap:5px;padding:2px 8px;
+            font-family:'JB','JetBrains Mono',monospace;font-size:11px;font-weight:600;border-radius:2px;
+            text-transform:uppercase;letter-spacing:.4px;
+        }
+        .pill-phishing{background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+        .pill-bec_fraud{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+        .pill-malware{background:rgba(168,85,247,.12);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+        .pill-spam{background:rgba(234,179,8,.12);color:#eab308;border:1px solid rgba(234,179,8,.3)}
+        .pill-legitimate{background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.3)}
+        .pill-unclassified{background:rgba(255,255,255,.06);color:var(--lab);border:1px solid var(--border)}
+
+        /* Toast Alert */
+        .toast{
+            position:fixed;bottom:24px;right:24px;background:#18181b;border:1px solid var(--border);
+            padding:14px 20px;border-radius:2px;box-shadow:0 8px 30px rgba(0,0,0,.6);
+            display:flex;align-items:center;gap:12px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;
+            transform:translateY(100px);opacity:0;transition:all .25s ease;z-index:9999;
+        }
+        .toast.show{transform:translateY(0);opacity:1}
+        .toast.success{border-left:3px solid var(--legit)}
+        .toast.error{border-left:3px solid var(--phishing)}
+    </style>
+</head>
+<body>
+
+<div class="shell">
+    <aside class="side">
+        <a href="/" class="side-logo">
+            <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg"><g stroke="#fff" stroke-width="3" stroke-linecap="butt"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(90,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(180,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(270,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g></svg>
+            <span>CyberSec</span>
+        </a>
+        <nav class="side-nav">
+            <a href="/admin">◆ Dashboard</a>
+            <a href="/admin/leads">◆ Leads</a>
+            <a href="/admin/newsletter">◆ Newsletter</a>
+            <a href="/admin/email-scanner">◆ Email Scanner</a>
+            <a href="/admin/email-classifier" class="active">◆ Email Classifier</a>
+            <a href="/admin/email-writer">◆ AI Email Writer</a>
+            <div class="sep"></div>
+            <a href="/admin/settings">◆ Settings</a>
+            <a href="/" target="_blank">◆ View Site</a>
+        </nav>
+        <div class="side-bottom">
+            <div class="side-user"><strong><%= user.username %></strong><%= user.role %></div>
+            <form action="/auth/logout" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="logout-btn">Sign out</button></form>
+        </div>
+    </aside>
+
+    <main class="main">
+        <!-- Top Title Bar -->
+        <div class="header-row">
+            <div class="header-title">
+                <h1>Email Threat Classifier Studio</h1>
+                <p class="subtitle">Multi-Class Threat Categorization &bull; Behavioral Signal Indices &bull; Automated SOC Containment</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-action btn-secondary" id="btnReclassifyAll" onclick="reclassifyAllScans()">
+                    <span>🔄 Reclassify Past Scans</span>
+                </button>
+                <a href="/admin/email-scanner" class="btn-action btn-secondary">
+                    <span>Email Scanner Radar &rarr;</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Telemetry Metrics Bar -->
+        <div class="stats-grid">
+            <div class="stat-card" style="--accent:var(--red)">
+                <div class="stat-label">Total Analyzed</div>
+                <div class="stat-value"><%= stats.total %></div>
+                <div class="stat-desc"><%= stats.classified %> categorized (<%= stats.unclassified %> pending)</div>
+            </div>
+            <div class="stat-card" style="--accent:var(--phishing)">
+                <div class="stat-label">Phishing Attacks</div>
+                <div class="stat-value" style="color:var(--phishing)"><%= stats.phishing %></div>
+                <div class="stat-desc">Credential harvest & spoofing</div>
+            </div>
+            <div class="stat-card" style="--accent:var(--bec)">
+                <div class="stat-label">BEC / Executive Fraud</div>
+                <div class="stat-value" style="color:var(--bec)"><%= stats.bec_fraud %></div>
+                <div class="stat-desc">Wire transfer & gift card coercion</div>
+            </div>
+            <div class="stat-card" style="--accent:var(--malware)">
+                <div class="stat-label">Malware Droppers</div>
+                <div class="stat-value" style="color:var(--malware)"><%= stats.malware %></div>
+                <div class="stat-desc">Weaponized macro/archive attachments</div>
+            </div>
+            <div class="stat-card" style="--accent:var(--spam)">
+                <div class="stat-label">Spam & Marketing</div>
+                <div class="stat-value" style="color:var(--spam)"><%= stats.spam %></div>
+                <div class="stat-desc">Unsolicited commercial blasts</div>
+            </div>
+            <div class="stat-card" style="--accent:var(--legit)">
+                <div class="stat-label">Legitimate Verified</div>
+                <div class="stat-value" style="color:var(--legit)"><%= stats.legitimate %></div>
+                <div class="stat-desc">Clean authentic business traffic</div>
+            </div>
+        </div>
+
+        <!-- Main Studio Grid -->
+        <div class="studio-layout">
+            <!-- Left: Interactive Tester Workbench -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>🧪 Live Classifier Workbench</span>
+                    </div>
+                    <span class="panel-badge">Heuristic & NLP Engine v2.4</span>
+                </div>
+
+                <!-- Presets -->
+                <div class="presets-bar">
+                    <div class="presets-label">⚡ Benchmark Simulation Presets:</div>
+                    <div class="preset-chips">
+                        <button type="button" class="preset-chip" onclick="loadBenchmarkPreset(0)">
+                            <span>🎣 Phishing: Microsoft 365 Credential</span>
+                        </button>
+                        <button type="button" class="preset-chip" onclick="loadBenchmarkPreset(1)">
+                            <span>💼 BEC: CEO Urgent Wire Transfer</span>
+                        </button>
+                        <button type="button" class="preset-chip" onclick="loadBenchmarkPreset(2)">
+                            <span>☣️ Malware: Weaponized Macro Invoice</span>
+                        </button>
+                        <button type="button" class="preset-chip" onclick="loadBenchmarkPreset(3)">
+                            <span>🎰 Spam: Lottery Prize Claim</span>
+                        </button>
+                        <button type="button" class="preset-chip" onclick="loadBenchmarkPreset(4)">
+                            <span>🛡️ Legitimate: Engineering Security Bulletin</span>
+                        </button>
+                    </div>
+                </div>
+
+                <form id="classifyForm" onsubmit="handleClassifySubmit(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="inpSender">Sender Email Address</label>
+                            <input type="text" id="inpSender" class="form-input" placeholder="e.g. security-alert@microsoft-verify365.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="inpSenderName">Sender Display Name</label>
+                            <input type="text" id="inpSenderName" class="form-input" placeholder="e.g. Microsoft Account Team">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="inpSubject">Email Subject</label>
+                            <input type="text" id="inpSubject" class="form-input" placeholder="e.g. Urgent: Account suspended - verify credentials immediately" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="inpRecipient">Target Recipient</label>
+                            <input type="text" id="inpRecipient" class="form-input" placeholder="e.g. employee@victim-corp.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="inpAttachments">Attachments (comma-separated filenames)</label>
+                        <input type="text" id="inpAttachments" class="form-input" placeholder="e.g. Invoice_Overdue_7719.xlsm, receipt.pdf.exe">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="inpBody">Email Body Content (Plaintext or HTML)</label>
+                        <textarea id="inpBody" class="form-textarea" placeholder="Paste full email text or HTML content here..." required></textarea>
+                        <div class="meta-helper">
+                            <span id="charCount">0 characters</span>
+                            <span>Tokens extracted automatically</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:18px">
+                        <button type="submit" class="btn-action" id="btnRunClassify">
+                            <span>⚡ Classify Message Now</span>
+                        </button>
+                        <button type="button" class="btn-action btn-secondary" onclick="resetForm()">
+                            <span>Clear Input</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right: Real-time Telemetry & Verdict Output -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>🎯 Real-Time Classification Telemetry</span>
+                    </div>
+                    <button class="btn-action btn-secondary" style="padding:4px 10px;font-size:11px" onclick="copyResultJSON()" id="btnCopyJson" title="Copy JSON output">
+                        <span>📋 JSON</span>
+                    </button>
+                </div>
+
+                <div id="resultContainer">
+                    <div class="result-empty" id="resultEmptyState">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                        <p>Select a benchmark preset above or enter email content to run instantaneous AI classification.</p>
+                    </div>
+
+                    <div id="resultContent" style="display:none">
+                        <!-- Big Verdict Banner -->
+                        <div class="verdict-box" id="verdictBox">
+                            <div class="verdict-header">
+                                <div>
+                                    <div class="verdict-tag" id="verdictCategoryBadge">PHISHING</div>
+                                    <div style="font-size:14px;font-weight:600;margin-top:10px" id="verdictName">Credential Harvest Attack</div>
+                                </div>
+                                <div class="confidence-meter">
+                                    <div class="confidence-val" id="verdictConfidence">98.5%</div>
+                                    <div class="confidence-sub">Confidence Score</div>
+                                </div>
+                            </div>
+                            <div class="verdict-action">
+                                <span class="verdict-action-pill" id="verdictActionPill">QUARANTINE</span>
+                                <span id="verdictActionText">Isolate message and prompt user for credential rotation.</span>
+                            </div>
+                        </div>
+
+                        <!-- Class Probability Distribution -->
+                        <div class="prob-section">
+                            <div class="section-subhead">
+                                <span>Multi-Class Probability Distribution</span>
+                                <span style="color:var(--lab)">Softmax Model</span>
+                            </div>
+                            <div id="probBarsContainer">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Behavioral Risk Indices -->
+                        <div class="prob-section">
+                            <div class="section-subhead">
+                                <span>Behavioral Threat Indicators</span>
+                                <span style="color:var(--lab)">Vector Scores</span>
+                            </div>
+                            <div class="behavioral-grid" id="behavioralGrid">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Explanatory Signal Tags -->
+                        <div class="prob-section" id="signalsSection">
+                            <div class="section-subhead">
+                                <span>Detected Lexical & Structural Cues</span>
+                            </div>
+                            <div class="signals-wrap" id="signalsWrap">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Audit Rationale -->
+                        <div class="prob-section">
+                            <div class="section-subhead">
+                                <span>SOC Decision Rationale</span>
+                            </div>
+                            <div class="rationale-text" id="rationaleText">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Classification Audit Table -->
+        <div class="panel" style="margin-top:30px">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span>🗄️ Recent Scanned Emails & Classification Audit Log</span>
+                </div>
+                <span class="panel-badge"><%= recentScans.length %> Records Loaded</span>
+            </div>
+
+            <div class="table-wrap">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Sender</th>
+                            <th>Threat Score</th>
+                            <th>Category</th>
+                            <th>Confidence</th>
+                            <th>Scanned</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (recentScans && recentScans.length > 0) { %>
+                            <% recentScans.forEach(function(s) { 
+                                const cat = s.classification_category || 'unclassified';
+                                const conf = s.classification_confidence !== null ? Math.round(s.classification_confidence * 100) + '%' : '—';
+                                const catMeta = categories[cat] || { name: 'Unclassified', icon: '❓' };
+                            %>
+                            <tr>
+                                <td class="subj-cell" title="<%= s.subject || '(No Subject)' %>">
+                                    <%= s.subject || '(No Subject)' %>
+                                </td>
+                                <td class="sender-cell" title="<%= s.sender %>">
+                                    <%= s.sender_name ? s.sender_name + ' <' + s.sender + '>' : s.sender %>
+                                </td>
+                                <td>
+                                    <span style="font-family:'JB','JetBrains Mono',monospace;font-weight:700;color:<%= s.threat_score >= 70 ? 'var(--phishing)' : (s.threat_score >= 40 ? 'var(--bec)' : 'var(--legit)') %>">
+                                        <%= s.threat_score %>/100
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="pill-mini pill-<%= cat %>">
+                                        <%= catMeta.icon %> <%= catMeta.name %>
+                                    </span>
+                                </td>
+                                <td style="font-family:'JB','JetBrains Mono',monospace">
+                                    <%= conf %>
+                                </td>
+                                <td style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab)">
+                                    <%= s.scanned_at ? new Date(s.scanned_at).toLocaleString() : '—' %>
+                                </td>
+                                <td>
+                                    <button class="btn-action btn-secondary" style="padding:4px 8px;font-size:11px" onclick="loadPastScanToStudio(<%= JSON.stringify(s.id) %>)">
+                                        Test in Studio
+                                    </button>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" style="text-align:center;padding:36px;color:var(--lab)">
+                                    No scanned emails in database yet. Run a Gmail sync or test an email in the studio above.
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Toast Feedback -->
+<div class="toast" id="toast"></div>
+
+<!-- Embedded Benchmarks and Scans Data for Quick Interactive Switching -->
+<script>
+    const BENCHMARKS = <%- JSON.stringify(benchmarks || []) %>;
+    const RECENT_SCANS = <%- JSON.stringify(recentScans || []) %>;
+    const CATEGORIES = <%- JSON.stringify(categories || {}) %>;
+    const CSRF_TOKEN = "<%= csrfToken %>";
+
+    let lastClassificationResult = null;
+
+    // Word counter
+    const inpBody = document.getElementById('inpBody');
+    const charCount = document.getElementById('charCount');
+    inpBody.addEventListener('input', () => {
+        charCount.textContent = `${inpBody.value.length} characters`;
+    });
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = `toast show ${type}`;
+        setTimeout(() => {
+            toast.className = 'toast';
+        }, 3200);
+    }
+
+    function loadBenchmarkPreset(index) {
+        if (!BENCHMARKS[index]) return;
+        const b = BENCHMARKS[index];
+        document.getElementById('inpSender').value = b.sender;
+        document.getElementById('inpSenderName').value = b.sender_name || '';
+        document.getElementById('inpSubject').value = b.subject;
+        document.getElementById('inpRecipient').value = b.recipient || 'analyst@enterprise-target.com';
+        document.getElementById('inpAttachments').value = (b.attachments || []).join(', ');
+        document.getElementById('inpBody').value = b.body_text || '';
+        charCount.textContent = `${(b.body_text || '').length} characters`;
+
+        // Highlight chip
+        document.querySelectorAll('.preset-chip').forEach((chip, i) => {
+            chip.classList.toggle('active', i === index);
+        });
+
+        // Trigger classification
+        executeClassification({
+            sender: b.sender,
+            senderName: b.sender_name,
+            subject: b.subject,
+            recipient: b.recipient,
+            attachments: b.attachments,
+            body: b.body_text
+        });
+    }
+
+    function loadPastScanToStudio(scanId) {
+        const scan = RECENT_SCANS.find(s => s.id === scanId);
+        if (!scan) return;
+
+        document.getElementById('inpSender').value = scan.sender || '';
+        document.getElementById('inpSenderName').value = scan.sender_name || '';
+        document.getElementById('inpSubject').value = scan.subject || '';
+        document.getElementById('inpRecipient').value = scan.recipient || '';
+        document.getElementById('inpBody').value = scan.body_text || scan.snippet || '';
+        charCount.textContent = `${(scan.body_text || scan.snippet || '').length} characters`;
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        executeClassification({
+            sender: scan.sender,
+            senderName: scan.sender_name,
+            subject: scan.subject,
+            recipient: scan.recipient,
+            body: scan.body_text || scan.snippet || ''
+        });
+    }
+
+    function resetForm() {
+        document.getElementById('classifyForm').reset();
+        charCount.textContent = '0 characters';
+        document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+        document.getElementById('resultEmptyState').style.display = 'flex';
+        document.getElementById('resultContent').style.display = 'none';
+        lastClassificationResult = null;
+    }
+
+    async function handleClassifySubmit(e) {
+        e.preventDefault();
+        const attachmentsStr = document.getElementById('inpAttachments').value.trim();
+        const attachments = attachmentsStr ? attachmentsStr.split(',').map(s => s.trim()) : [];
+
+        await executeClassification({
+            sender: document.getElementById('inpSender').value.trim(),
+            senderName: document.getElementById('inpSenderName').value.trim(),
+            subject: document.getElementById('inpSubject').value.trim(),
+            recipient: document.getElementById('inpRecipient').value.trim(),
+            attachments: attachments,
+            body: document.getElementById('inpBody').value.trim()
+        });
+    }
+
+    async function executeClassification(payload) {
+        const btn = document.getElementById('btnRunClassify');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Analyzing Threat Patterns...</span>';
+
+        try {
+            const res = await fetch('/admin/email-classifier/classify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': CSRF_TOKEN
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to classify email');
+            }
+
+            renderClassificationResult(data.result);
+            showToast('Classification executed successfully!', 'success');
+        } catch (err) {
+            console.error('Classification error:', err);
+            showToast(err.message || 'Error running classifier', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span>⚡ Classify Message Now</span>';
+        }
+    }
+
+    function renderClassificationResult(result) {
+        lastClassificationResult = result;
+        document.getElementById('resultEmptyState').style.display = 'none';
+        document.getElementById('resultContent').style.display = 'block';
+
+        const cat = result.category;
+        const confPercent = Math.round(result.confidence * 100);
+
+        // Badge & Tag
+        const badge = document.getElementById('verdictCategoryBadge');
+        badge.className = `verdict-tag tag-${cat}`;
+        badge.innerHTML = `${result.icon || ''} ${result.label || cat.toUpperCase()}`;
+
+        document.getElementById('verdictName').textContent = result.description || 'Threat Analysis Complete';
+        document.getElementById('verdictConfidence').textContent = `${confPercent}%`;
+
+        // SOC Action
+        const actionPill = document.getElementById('verdictActionPill');
+        actionPill.textContent = result.action || 'INSPECT';
+        document.getElementById('verdictActionText').textContent = result.recommendation || '';
+
+        // Probability bars
+        const probContainer = document.getElementById('probBarsContainer');
+        probContainer.innerHTML = '';
+        const colorMap = {
+            phishing: 'var(--phishing)',
+            bec_fraud: 'var(--bec)',
+            malware: 'var(--malware)',
+            spam: 'var(--spam)',
+            legitimate: 'var(--legit)'
+        };
+
+        if (result.probabilities) {
+            Object.keys(result.probabilities).forEach(key => {
+                const prob = result.probabilities[key];
+                const pct = Math.round(prob * 100);
+                const catMeta = CATEGORIES[key] || { name: key };
+                const row = document.createElement('div');
+                row.className = 'prob-row';
+                row.innerHTML = `
+                    <div class="prob-meta">
+                        <span>${catMeta.icon || '▪'} ${catMeta.name || key}</span>
+                        <span style="font-weight:600;color:${colorMap[key]}">${pct}%</span>
+                    </div>
+                    <div class="prob-bar">
+                        <div class="prob-fill" style="width:${pct}%;background:${colorMap[key]}"></div>
+                    </div>
+                `;
+                probContainer.appendChild(row);
+            });
+        }
+
+        // Behavioral Indices
+        const bGrid = document.getElementById('behavioralGrid');
+        bGrid.innerHTML = '';
+        if (result.behavioral_indices) {
+            const indices = [
+                { key: 'urgency_coercion', label: 'Urgency & Coercion' },
+                { key: 'credential_harvest', label: 'Credential Harvest' },
+                { key: 'financial_redirection', label: 'Financial / Wire' },
+                { key: 'impersonation_authority', label: 'Impersonation' },
+                { key: 'technical_anomaly', label: 'Technical Weaponization' }
+            ];
+
+            indices.forEach(idx => {
+                const val = result.behavioral_indices[idx.key] || 0;
+                const card = document.createElement('div');
+                card.className = 'behavioral-card';
+                card.innerHTML = `
+                    <div class="b-card-title">${idx.label}</div>
+                    <div class="b-card-val" style="color:${val >= 60 ? 'var(--phishing)' : (val >= 30 ? 'var(--bec)' : 'var(--legit)')}">${val}%</div>
+                    <div class="b-bar"><div class="b-fill" style="width:${val}%;background:${val >= 60 ? 'var(--phishing)' : (val >= 30 ? 'var(--bec)' : 'var(--legit)')}"></div></div>
+                `;
+                bGrid.appendChild(card);
+            });
+        }
+
+        // Signals wrap
+        const signalsWrap = document.getElementById('signalsWrap');
+        signalsWrap.innerHTML = '';
+        if (result.signals && result.signals.length > 0) {
+            result.signals.forEach(sig => {
+                const pill = document.createElement('span');
+                pill.className = 'signal-pill';
+                pill.textContent = `⚡ ${sig}`;
+                signalsWrap.appendChild(pill);
+            });
+            document.getElementById('signalsSection').style.display = 'block';
+        } else {
+            document.getElementById('signalsSection').style.display = 'none';
+        }
+
+        // Rationale
+        document.getElementById('rationaleText').textContent = result.rationale || 'Engine verified normal message patterns without distinct malicious indicators.';
+    }
+
+    function copyResultJSON() {
+        if (!lastClassificationResult) {
+            showToast('Run a classification first', 'error');
+            return;
+        }
+        navigator.clipboard.writeText(JSON.stringify(lastClassificationResult, null, 2)).then(() => {
+            showToast('Classification JSON copied to clipboard!', 'success');
+        });
+    }
+
+    async function reclassifyAllScans() {
+        if (!confirm('Re-run classification across all stored emails in the database?')) return;
+        const btn = document.getElementById('btnReclassifyAll');
+        btn.disabled = true;
+        btn.innerHTML = '<span>⏳ Processing All Scans...</span>';
+
+        try {
+            const res = await fetch('/admin/email-classifier/reclassify-all', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': CSRF_TOKEN
+                }
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                showToast(data.message || 'All scans reclassified!', 'success');
+                setTimeout(() => window.location.reload(), 1200);
+            } else {
+                throw new Error(data.error || 'Failed to reclassify scans');
+            }
+        } catch (err) {
+            console.error('Reclassify all error:', err);
+            showToast(err.message || 'Error during batch reclassification', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<span>🔄 Reclassify Past Scans</span>';
+        }
+    }
+</script>
+
+</body>
+</html>

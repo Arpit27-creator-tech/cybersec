@@ -814,3 +814,15 @@
     transform: translateY(0);
   }
 }
+
+@media (max-width: 440px) {
+  .aegis-launcher {
+    bottom: 16px;
+    right: 16px;
+    padding: 6px;
+    gap: 0;
+  }
+  .aegis-launcher-content {
+    display: none;
+  }
+}

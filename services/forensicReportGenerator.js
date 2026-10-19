@@ -277,8 +277,16 @@ function generateForensicReport(scan) {
     });
   }
 
-  // Case identifier
-  const caseId = `CS-IR-${new Date(scan.date || scan.scanned_at || Date.now()).getFullYear()}-${String(scan.id).padStart(5, '0')}`;
+  // Case identifier with safe date fallback
+  let reportYear = new Date().getFullYear();
+  if (scan.date || scan.scanned_at) {
+    const rawDate = scan.date || scan.scanned_at;
+    const parsedDate = new Date(typeof rawDate === 'string' ? rawDate.replace(' ', 'T') : rawDate);
+    if (!isNaN(parsedDate.getTime()) && parsedDate.getFullYear() > 1980) {
+      reportYear = parsedDate.getFullYear();
+    }
+  }
+  const caseId = `CS-IR-${reportYear}-${String(scan.id || Math.floor(Math.random() * 10000)).padStart(5, '0')}`;
 
   return {
     caseId,

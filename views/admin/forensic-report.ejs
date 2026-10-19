@@ -9,14 +9,14 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=block" rel="stylesheet">
     <style>
         *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-        html{min-height:100%;background:#09090b}
-        body{color:#f4f4f5;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+        html{min-height:100%;background:#08080a}
+        body{color:#f4f4f5;font-family:'Space Grotesk',sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;background:#08080a}
         a{color:inherit;text-decoration:none}
         
         :root{
-            --bg:#09090b;--card:#121215;--border:rgba(255,255,255,.09);
-            --red:#e11d48;--crit:#ef4444;--high:#f97316;--med:#eab308;--safe:#22c55e;
-            --muted:#a1a1aa;--code:#27272a;
+            --bg:#08080a;--card:#111115;--border:rgba(255,255,255,.08);
+            --red:#c81b1c;--crit:#ef4444;--high:#f97316;--med:#eab308;--safe:#22c55e;
+            --muted:#71717a;--code:#16161c;
         }
 
         .container{max-width:1120px;margin:0 auto;padding:40px 24px}
@@ -26,15 +26,15 @@
         .back-link{display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);transition:color .2s}
         .back-link:hover{color:#fff}
         .actions-row{display:flex;gap:12px}
-        .btn{padding:8px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;border-radius:4px;border:1px solid var(--border);background:#18181b;color:#fff;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
-        .btn:hover{background:#27272a;border-color:rgba(255,255,255,.2)}
+        .btn{padding:8px 16px;font-family:'JetBrains Mono',monospace;font-size:12px;cursor:pointer;border-radius:2px;border:1px solid var(--border);background:#16161c;color:#fff;display:inline-flex;align-items:center;gap:8px;transition:all .2s}
+        .btn:hover{background:#22222a;border-color:rgba(255,255,255,.2)}
         .btn-primary{background:var(--red);border-color:var(--red)}
-        .btn-primary:hover{background:#be123c}
+        .btn-primary:hover{background:#b01617}
 
         /* Dossier Header */
-        .dossier-header{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:32px;margin-bottom:28px;position:relative;overflow:hidden}
+        .dossier-header{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:32px;margin-bottom:28px;position:relative;overflow:hidden}
         .dossier-header::before{
-            content:'';position:absolute;top:0;left:0;bottom:0;width:5px;
+            content:'';position:absolute;top:0;left:0;bottom:0;width:4px;
             background:<%= report.classification.threatLevel==='critical'? 'var(--crit)' : report.classification.threatLevel==='high'? 'var(--high)' : report.classification.threatLevel==='medium'? 'var(--med)' : 'var(--safe)' %>;
         }
         .dossier-meta{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:20px;margin-bottom:20px}
@@ -42,20 +42,20 @@
         .dossier-title{font-size:26px;font-weight:700;letter-spacing:-.5px;color:#fff;margin-bottom:8px}
         .dossier-subtitle{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted)}
         
-        .score-box{background:#18181b;border:1px solid var(--border);padding:16px 24px;border-radius:6px;text-align:right;min-width:200px}
+        .score-box{background:#16161c;border:1px solid var(--border);padding:16px 24px;border-radius:2px;text-align:right;min-width:200px}
         .score-val{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:700;line-height:1;color:<%= report.classification.threatLevel==='critical'? 'var(--crit)' : report.classification.threatLevel==='high'? 'var(--high)' : report.classification.threatLevel==='medium'? 'var(--med)' : 'var(--safe)' %>}
         .score-lbl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);text-transform:uppercase;margin-top:4px}
-        .cvss-badge{display:inline-block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(255,255,255,.06);padding:3px 8px;border-radius:3px;color:#e4e4e7}
+        .cvss-badge{display:inline-block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:11px;background:rgba(255,255,255,.06);padding:3px 8px;border-radius:2px;color:#e4e4e7}
 
         /* Grid */
         .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px}
         @media(max-width:860px){.grid-2{grid-template-columns:1fr}}
 
         /* Section Card */
-        .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:28px;margin-bottom:28px}
+        .card{background:var(--card);border:1px solid var(--border);border-radius:2px;padding:28px;margin-bottom:28px}
         .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
         .card-title{font-size:16px;font-weight:600;display:flex;align-items:center;gap:10px;color:#fff}
-        .card-tag{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 8px;background:rgba(255,255,255,.05);border-radius:4px;color:var(--muted)}
+        .card-tag{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 8px;background:rgba(255,255,255,.05);border-radius:2px;color:var(--muted)}
 
         /* Meta detail rows */
         .meta-list{display:flex;flex-direction:column;gap:12px}
@@ -66,7 +66,7 @@
 
         /* MITRE Table */
         .mitre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-        .mitre-card{background:#18181b;border:1px solid var(--border);border-radius:6px;padding:16px;border-left:3px solid var(--red)}
+        .mitre-card{background:#16161c;border:1px solid var(--border);border-radius:2px;padding:16px;border-left:3px solid var(--red)}
         .mitre-id{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px}
         .mitre-name{font-weight:600;font-size:14px;color:#fff;margin-bottom:4px}
         .mitre-tactic{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:8px}
@@ -74,10 +74,10 @@
 
         /* Forensics Lists */
         .ioc-list{display:flex;flex-direction:column;gap:12px}
-        .ioc-item{background:#18181b;border:1px solid var(--border);border-radius:6px;padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+        .ioc-item{background:#16161c;border:1px solid var(--border);border-radius:2px;padding:14px 18px;display:flex;flex-direction:column;gap:6px}
         .ioc-item.warn{border-left:3px solid var(--crit)}
         .ioc-item.alert{border-left:3px solid var(--high)}
-        .ioc-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 6px;border-radius:3px;align-self:flex-start}
+        .ioc-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 6px;border-radius:2px;align-self:flex-start}
         .ioc-badge.crit{background:rgba(239,68,68,.15);color:var(--crit)}
         .ioc-badge.high{background:rgba(249,115,22,.15);color:var(--high)}
         .ioc-val{font-family:'JetBrains Mono',monospace;font-size:13px;color:#fff;word-break:break-all}
@@ -85,15 +85,15 @@
 
         /* SOP Playbook Checklist */
         .sop-list{display:flex;flex-direction:column;gap:14px}
-        .sop-step{background:#18181b;border:1px solid var(--border);border-radius:6px;padding:16px 20px;display:flex;gap:16px;align-items:flex-start}
-        .sop-num{width:28px;height:28px;border-radius:50%;background:rgba(225,29,72,.15);color:var(--red);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;flex-shrink:0}
+        .sop-step{background:#16161c;border:1px solid var(--border);border-radius:2px;padding:16px 20px;display:flex;gap:16px;align-items:flex-start}
+        .sop-num{width:28px;height:28px;border-radius:2px;background:rgba(200,27,28,.15);color:var(--red);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;flex-shrink:0}
         .sop-content{flex:1}
         .sop-phase{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:#fff;margin-bottom:4px;display:flex;justify-content:space-between}
-        .sop-prio{font-size:10px;padding:2px 6px;border-radius:3px;background:rgba(255,255,255,.08);color:var(--muted)}
+        .sop-prio{font-size:10px;padding:2px 6px;border-radius:2px;background:rgba(255,255,255,.08);color:var(--muted)}
         .sop-action{font-size:13px;color:#d4d4d8;line-height:1.5}
 
         /* Raw artifacts preview */
-        .code-block{background:#000;border:1px solid var(--border);border-radius:6px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#a1a1aa;max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+        .code-block{background:#000;border:1px solid var(--border);border-radius:2px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#a1a1aa;max-height:220px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
 
         /* Print styles */
         @media print{
@@ -111,9 +111,26 @@
     <div class="container">
         <!-- Top Action Bar -->
         <div class="top-bar">
-            <a href="/admin/email-scanner" class="back-link">
-                <span>← Return to Email Threat Radar</span>
-            </a>
+            <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+                <a href="/" style="display:inline-flex;align-items:center;gap:10px;margin-right:6px">
+                    <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px">
+                        <g stroke="#fff" stroke-width="3" stroke-linecap="butt"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                        <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(90,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                        <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(180,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                        <g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(270,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g>
+                    </svg>
+                    <span style="font-weight:700;font-size:16px;letter-spacing:-.4px;font-family:'Space Grotesk',sans-serif">CyberSec</span>
+                </a>
+                <a href="/admin/email-scanner" class="back-link">
+                    <span>← Return to Threat Radar</span>
+                </a>
+                <a href="/admin/email-classifier" class="back-link" style="color:var(--muted)">
+                    <span>◆ Classifier Studio</span>
+                </a>
+                <a href="/admin/email-writer" class="back-link" style="color:var(--muted)">
+                    <span>◆ AI Email Writer</span>
+                </a>
+            </div>
             <div class="actions-row">
                 <button class="btn" onclick="copyDossierSummary()">
                     <span>📋 Copy Briefing</span>
@@ -357,17 +374,32 @@
         </div>
     </div>
 
+    <script id="dossierPayload" type="application/json">
+    <%- JSON.stringify({
+        caseId: report.caseId || '',
+        attackType: report.classification?.attackType || '',
+        threatScore: report.classification?.threatScore || 0,
+        threatLevel: report.classification?.threatLevel || 'unknown',
+        cvssScore: report.classification?.cvssScore || '0.0',
+        recipient: report.metadata?.recipient || '',
+        sender: report.metadata?.sender || '',
+        subject: report.metadata?.subject || '',
+        verdict: report.executiveSummary?.verdict || '',
+        technicalNarrative: report.executiveSummary?.technicalNarrative || ''
+    }).replace(/</g, '\\u003c') %>
+    </script>
     <script>
     function copyDossierSummary() {
-        var text = 'FORENSIC INCIDENT DOSSIER: <%= report.caseId %>\n' +
-                   'Classification: <%= report.classification.attackType %>\n' +
-                   'Threat Index: <%= report.classification.threatScore %>/100 (<%= report.classification.threatLevel.toUpperCase() %>)\n' +
-                   'CVSS v3.1: <%= report.classification.cvssScore %>\n' +
-                   'Target: <%= report.metadata.recipient %>\n' +
-                   'Sender: <%= report.metadata.sender %>\n' +
-                   'Subject: <%= report.metadata.subject %>\n\n' +
-                   'Analyst Verdict:\n<%= report.executiveSummary.verdict %>\n\n' +
-                   'Key Findings:\n<%= report.executiveSummary.technicalNarrative %>';
+        var d = JSON.parse(document.getElementById('dossierPayload').textContent);
+        var text = 'FORENSIC INCIDENT DOSSIER: ' + d.caseId + '\n' +
+                   'Classification: ' + d.attackType + '\n' +
+                   'Threat Index: ' + d.threatScore + '/100 (' + (d.threatLevel || '').toUpperCase() + ')\n' +
+                   'CVSS v3.1: ' + d.cvssScore + '\n' +
+                   'Target: ' + d.recipient + '\n' +
+                   'Sender: ' + d.sender + '\n' +
+                   'Subject: ' + d.subject + '\n\n' +
+                   'Analyst Verdict:\n' + d.verdict + '\n\n' +
+                   'Key Findings:\n' + d.technicalNarrative;
         navigator.clipboard.writeText(text).then(function() {
             alert('✓ Forensic dossier summary copied to clipboard.');
         }).catch(function() {

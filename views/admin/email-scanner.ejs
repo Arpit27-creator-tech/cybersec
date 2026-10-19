@@ -103,6 +103,14 @@
         .threat-low{background:rgba(59,130,246,.18);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
         .threat-safe{background:rgba(34,197,94,.18);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
 
+        .classification-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;font-family:'JB','JetBrains Mono',monospace;white-space:nowrap;border-radius:2px}
+        .class-phishing{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+        .class-bec_fraud{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+        .class-malware{background:rgba(168,85,247,.15);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+        .class-spam{background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.3)}
+        .class-legitimate{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+        .class-unclassified{background:rgba(255,255,255,.06);color:var(--lab);border:1px solid var(--border)}
+
         .flags-tag{display:inline-block;font-size:11px;color:var(--lab);background:rgba(255,255,255,.04);padding:4px 8px;border:1px solid var(--border)}
         
         .inspect-btn{background:none;border:1px solid var(--border);color:var(--sub);font-family:'JB','JetBrains Mono',monospace;font-size:11px;padding:8px 12px;cursor:pointer;border-radius:0;transition:all .2s;white-space:nowrap}
@@ -111,13 +119,49 @@
         .empty{padding:48px;text-align:center;font-family:'JB','JetBrains Mono',monospace;font-size:14px;color:var(--lab)}
 
         /* Modal */
-        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:999;padding:20px}
-        .modal-overlay.active{display:flex}
-        .modal-card{background:#0e0e0e;border:1px solid var(--border);width:100%;max-width:760px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(0,0,0,.8)}
+        .modal-overlay{
+            position:fixed !important;
+            top:0 !important;
+            left:0 !important;
+            right:0 !important;
+            bottom:0 !important;
+            width:100% !important;
+            height:100% !important;
+            background:rgba(0,0,0,.88) !important;
+            backdrop-filter:blur(8px) !important;
+            -webkit-backdrop-filter:blur(8px) !important;
+            display:none;
+            align-items:center !important;
+            justify-content:center !important;
+            z-index:9999999 !important;
+            padding:20px !important;
+            overflow-y:auto !important;
+            box-sizing:border-box !important;
+        }
+        .modal-overlay.active{display:flex !important}
+        .modal-card{background:#0e0e0e;border:1px solid var(--border);width:100%;max-width:760px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,.9);position:relative;margin:auto}
         .modal-header{padding:20px 28px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
         .modal-header h3{font-size:18px;font-weight:600;letter-spacing:-.4px}
-        .modal-close{background:none;border:none;color:var(--lab);font-size:22px;cursor:pointer;padding:0}
-        .modal-close:hover{color:#fff}
+        .modal-close{
+            background:rgba(255,255,255,.06);
+            border:1px solid var(--border);
+            color:var(--lab);
+            font-size:16px;
+            cursor:pointer;
+            padding:6px 14px;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            transition:all .2s;
+            line-height:1;
+            font-family:'JB','JetBrains Mono',monospace;
+            user-select:none;
+        }
+        .modal-close:hover{
+            color:#fff;
+            background:rgba(255,255,255,.15);
+            border-color:rgba(255,255,255,.3);
+        }
         .modal-body{padding:28px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:20px}
         
         .m-section{background:rgba(255,255,255,.02);border:1px solid var(--border);padding:18px}
@@ -156,6 +200,18 @@
         .alert-error{background:rgba(200,27,28,.08);color:#ef4444;border-color:#ef4444}
         @keyframes spin{100%{transform:rotate(360deg)}}
 
+        /* Autonomous Daemon & Dropzone */
+        .daemon-card{background:var(--card);border:1px solid var(--border);padding:18px 24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;transition:border-color .3s}
+        .daemon-pulse{position:relative;width:14px;height:14px;display:flex;align-items:center;justify-content:center}
+        .pulse-dot{width:10px;height:10px;border-radius:50%;background:var(--safe)}
+        .pulse-ring{position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--safe);opacity:0;animation:daemonRing 2s infinite cubic-bezier(.25,.46,.45,.94)}
+        .daemon-pulse.paused .pulse-dot{background:var(--lab)}
+        .daemon-pulse.paused .pulse-ring{display:none}
+        @keyframes daemonRing{0%{transform:scale(.7);opacity:.9}100%{transform:scale(1.8);opacity:0}}
+
+        .eml-dropzone{border:2px dashed var(--border);background:rgba(255,255,255,.015);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;border-radius:0}
+        .eml-dropzone:hover,.eml-dropzone.dragover{border-color:var(--safe);background:rgba(34,197,94,.04)}
+
         @media(max-width:768px){
             .shell{flex-direction:column}
             .side{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:16px;align-items:center}
@@ -169,7 +225,204 @@
             .toolbar input[type="text"]{width:100%}
         }
         :focus-visible{outline:2px solid #fff;outline-offset:3px}
+        .btn-action span{pointer-events:none}
     </style>
+    <script>
+    // Bulletproof clipboard helper: synchronous execCommand first for immediate click gesture, then navigator.clipboard fallback
+    function copyTextToClipboard(text, callback) {
+        var succeeded = false;
+        try {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.top = '0';
+            ta.style.left = '-9999px';
+            ta.style.width = '2em';
+            ta.style.height = '2em';
+            ta.style.padding = '0';
+            ta.style.border = 'none';
+            ta.style.outline = 'none';
+            ta.style.boxShadow = 'none';
+            ta.style.background = 'transparent';
+            (document.body || document.documentElement).appendChild(ta);
+            ta.focus();
+            ta.select();
+            if (typeof ta.setSelectionRange === 'function') {
+                ta.setSelectionRange(0, ta.value.length);
+            }
+            succeeded = document.execCommand('copy');
+            (document.body || document.documentElement).removeChild(ta);
+        } catch (_) {
+            succeeded = false;
+        }
+
+        if (succeeded) {
+            if (callback) callback(true);
+            return;
+        }
+
+        if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+            navigator.clipboard.writeText(text).then(function() {
+                if (callback) callback(true);
+            }).catch(function() {
+                if (callback) callback(false);
+            });
+            return;
+        }
+
+        if (callback) callback(false);
+    }
+    window.copyTextToClipboard = copyTextToClipboard;
+
+    // Early defined modal openers and action handlers so buttons work reliably
+    window.openExtensionModal = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        var m = document.getElementById('extensionModal');
+        if (m) {
+            m.style.setProperty('display', 'flex', 'important');
+            m.classList.add('active');
+            if (typeof checkExtensionStatus === 'function') checkExtensionStatus();
+        }
+    };
+    window.closeExtensionModal = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (e && e.stopPropagation) e.stopPropagation();
+        var m = document.getElementById('extensionModal');
+        if (m) {
+            m.style.setProperty('display', 'none', 'important');
+            m.classList.remove('active');
+        }
+    };
+    window.openEmlModal = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        var m = document.getElementById('emlModal');
+        if (m) {
+            m.style.setProperty('display', 'flex', 'important');
+            m.classList.add('active');
+        }
+    };
+    window.closeEmlModal = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (e && e.stopPropagation) e.stopPropagation();
+        var m = document.getElementById('emlModal');
+        if (m) {
+            m.style.setProperty('display', 'none', 'important');
+            m.classList.remove('active');
+        }
+    };
+    window.openTextScanModal = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        var m = document.getElementById('textScanModal');
+        if (m) {
+            m.style.setProperty('display', 'flex', 'important');
+            m.classList.add('active');
+        }
+    };
+    window.closeTextScanModal = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (e && e.stopPropagation) e.stopPropagation();
+        var m = document.getElementById('textScanModal');
+        if (m) {
+            m.style.setProperty('display', 'none', 'important');
+            m.classList.remove('active');
+        }
+    };
+    window.closeThreatInspector = function(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (e && e.stopPropagation) e.stopPropagation();
+        var m = document.getElementById('threatModal');
+        if (m) {
+            m.style.setProperty('display', 'none', 'important');
+            m.classList.remove('active');
+        }
+    };
+    window.copyChromeExtensionsUrl = function(btn) {
+        var targetBtn = btn || document.getElementById('btnCopyChromeUrl') || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
+        var url = 'chrome://extensions';
+        copyTextToClipboard(url, function(ok) {
+            if (targetBtn) {
+                var orig = targetBtn.getAttribute('data-orig-html') || targetBtn.innerHTML;
+                targetBtn.setAttribute('data-orig-html', orig);
+                targetBtn.innerHTML = '<span style="color:#00E5FF;font-weight:700">✓ chrome://extensions Copied!</span>';
+                targetBtn.style.borderColor = '#00E5FF';
+                setTimeout(function() {
+                    targetBtn.innerHTML = orig;
+                    targetBtn.style.borderColor = '';
+                }, 2500);
+            }
+        });
+    };
+    window.copyExtensionFolderPath = function(btn) {
+        var targetBtn = btn || document.getElementById('btnCopyFolderPath') || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
+        var folderPath = '/Users/arpi85222707gmail.com/Documents/cybersec/extension';
+        
+        var disp = document.getElementById('extensionPathDisplay');
+        if (disp) {
+            try {
+                var range = document.createRange();
+                range.selectNodeContents(disp);
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } catch (_) {}
+        }
+
+        copyTextToClipboard(folderPath, function(ok) {
+            if (targetBtn) {
+                var orig = targetBtn.getAttribute('data-orig-html') || targetBtn.innerHTML;
+                targetBtn.setAttribute('data-orig-html', orig);
+                targetBtn.innerHTML = '<span style="color:#0B0F19;font-weight:700">✓ Path Copied to Clipboard!</span>';
+                setTimeout(function() {
+                    targetBtn.innerHTML = orig;
+                }, 2500);
+            }
+        });
+    };
+    window.revealExtensionInFinder = function(btn) {
+        var targetBtn = btn || document.getElementById('btnRevealFinder') || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
+        var orig = targetBtn ? (targetBtn.getAttribute('data-orig-html') || targetBtn.innerHTML) : null;
+        if (targetBtn) {
+            targetBtn.setAttribute('data-orig-html', orig);
+            targetBtn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Opening Finder...';
+            targetBtn.disabled = true;
+        }
+        fetch('/api/extension/reveal-finder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                if (targetBtn) {
+                    targetBtn.innerHTML = '<span style="color:#00E5FF">✓ Opened in Finder!</span>';
+                    setTimeout(function() {
+                        targetBtn.innerHTML = orig;
+                        targetBtn.disabled = false;
+                    }, 2500);
+                }
+            } else {
+                alert('Could not open Finder: ' + (data.error || 'Unknown error'));
+                if (targetBtn) {
+                    targetBtn.innerHTML = orig;
+                    targetBtn.disabled = false;
+                }
+            }
+        })
+        .catch(function(err) {
+            alert('Network error revealing folder');
+            if (targetBtn) {
+                targetBtn.innerHTML = orig;
+                targetBtn.disabled = false;
+            }
+        });
+    };
+    window.toggleToolsCard = function(tab) {
+        if (tab === 'extension' || !tab) window.openExtensionModal();
+        else if (tab === 'eml') window.openEmlModal();
+        else if (tab === 'paste') window.openTextScanModal();
+    };
+    window.showConnectModal = window.toggleToolsCard;
+    </script>
 </head>
 <body>
 <div class="shell">
@@ -183,6 +436,8 @@
             <a href="/admin/leads">◆ Leads</a>
             <a href="/admin/newsletter">◆ Newsletter</a>
             <a href="/admin/email-scanner" class="active">◆ Email Scanner</a>
+            <a href="/admin/email-classifier">◆ Email Classifier</a>
+            <a href="/admin/email-writer">◆ AI Email Writer</a>
             <div class="sep"></div>
             <a href="/admin/settings">◆ Settings</a>
             <a href="/" target="_blank">◆ View Site</a>
@@ -212,150 +467,33 @@
             </div>
         </div>
 
-        <% if (locals.scannedCount !== undefined && locals.scannedCount !== null) { %>
-        <div class="alert alert-success">✓ Successfully scanned <%= scannedCount %> emails from Gmail inbox! Threat radar updated.</div>
-        <% } %>
-        <% if (connectedSuccess) { %>
-        <div class="alert alert-success">✓ Gmail account linked successfully! Inbox scanned for threats.</div>
-        <% } %>
-        <% if (oauthError) { %>
-        <div class="alert alert-error"><%= oauthError === 'missing_credentials' ? 'Google OAuth Notice: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not set in .env. You can test immediately using the "Load Threat Simulation" button below or add your Google Cloud credentials to .env.' : oauthError %></div>
-        <% } %>
-
-        <!-- Connection Banner -->
-        <div class="conn-box">
+        <!-- Live Threat Radar Status Bar -->
+        <div class="conn-box" style="border-left:4px solid #00E5FF;background:rgba(10,15,29,0.95);box-shadow:0 4px 20px rgba(0,0,0,0.4)">
             <div class="conn-info">
-                <div class="conn-dot <%= account ? '' : 'disconnected' %>"></div>
+                <div class="conn-dot" style="background:#00E5FF;box-shadow:0 0 10px #00E5FF"></div>
                 <div>
-                    <div class="conn-title"><%= account ? ('Linked Account: ' + account.email + (account.refresh_token === 'imap' ? ' (via App Password)' : ' (via OAuth 2.0)')) : 'Connect Gmail to Scan Inbox' %></div>
-                    <div class="conn-sub">
-                        <% if (account) { %>
-                            Connected &amp; ready. Last scanned: <%= account.last_scanned_at ? new Date(account.last_scanned_at).toLocaleString() : 'Never' %>
-                        <% } else { %>
-                            Choose your preferred connection method: 30-second App Password (fastest) or Google OAuth 2.0.
-                        <% } %>
+                    <div class="conn-title" style="display:flex;align-items:center;gap:10px">
+                        <span>CyberSec Threat Radar — Gmail Live Stream</span>
+                        <span style="font-size:10px;background:rgba(0,229,255,.15);color:#00E5FF;padding:2px 8px;border:1px solid rgba(0,229,255,.3)">ZERO CREDENTIAL MODE</span>
+                    </div>
+                    <div class="conn-sub" style="color:var(--lab)">
+                        Emails inspected in Gmail via the CyberSec Chrome Extension stream here in real time with automatic threat archiving. No passwords or OAuth needed.
                     </div>
                 </div>
             </div>
             <div class="conn-actions">
-                <% if (account) { %>
-                    <button class="btn-action" id="scanLiveBtn" onclick="triggerLiveScan()">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                        Scan Gmail Now
-                    </button>
-                    <form action="/admin/email-scanner/disconnect" method="POST" onsubmit="return confirm('Disconnect this Gmail account?')">
-                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                        <button type="submit" class="btn-action btn-danger">Disconnect</button>
-                    </form>
-                <% } else { %>
-                    <button type="button" class="btn-action" onclick="showConnectModal('app-pass')">
-                        <span>⚡ Connect with App Password</span>
-                    </button>
-                    <button type="button" class="btn-action btn-secondary" onclick="showConnectModal('oauth')">
-                        <span>🔑 Connect with OAuth 2.0</span>
-                    </button>
-                <% } %>
-            </div>
-        </div>
-
-        <!-- Connection Modal / Card -->
-        <div id="connectCard" style="background:var(--card);border:1px solid var(--border);padding:24px;margin-bottom:28px;<%= account ? 'display:none;' : 'display:block;' %>">
-            <!-- Tabs -->
-            <div style="display:flex;gap:12px;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:20px;flex-wrap:wrap">
-                <button type="button" id="tabAppPassBtn" class="pill active" onclick="switchConnTab('app-pass')">⚡ Method 1: Gmail App Password</button>
-                <button type="button" id="tabOAuthBtn" class="pill" onclick="switchConnTab('oauth')">🔑 Method 2: Google OAuth 2.0</button>
-                <button type="button" id="tabPasteBtn" class="pill" onclick="switchConnTab('paste')">📝 Instant Paste &amp; Scan Email</button>
-            </div>
-
-            <!-- Tab 1: App Password (Fastest) -->
-            <div id="tabAppPassContent">
-                <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:20px;background:rgba(255,255,205,.02);padding:14px;border-left:2px solid var(--safe)">
-                    <div style="font-weight:bold;color:#fff;margin-bottom:6px">⚡ How to get a Google App Password (30 Seconds):</div>
-                    1. Ensure <strong>IMAP Access</strong> is enabled in your Gmail Settings (<a href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" style="color:var(--safe);text-decoration:underline">mail.google.com &gt; Forwarding and POP/IMAP &gt; Enable IMAP</a>).<br>
-                    2. Open <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--safe);text-decoration:underline">myaccount.google.com/apppasswords</a>.<br>
-                    3. Under <strong>App name</strong>, type <code style="background:#000;padding:2px 6px;color:#fff">CyberSec Scanner</code> and click <strong>Create</strong>.<br>
-                    4. Paste your Gmail and the 16-character code below and click <strong>Connect &amp; Scan Inbox</strong>.
-                </div>
-
-                <form action="/admin/email-scanner/connect-imap" method="POST" style="display:flex;flex-direction:column;gap:16px;max-width:580px">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div>
-                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Your Gmail Address</label>
-                        <input type="email" name="email" placeholder="yourname@gmail.com" required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
-                    </div>
-                    <div>
-                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">16-Character Google App Password</label>
-                        <input type="password" name="appPassword" placeholder="abcd efgh ijkl mnop" required minlength="16" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
-                    </div>
-                    <div style="display:flex;gap:12px;margin-top:6px">
-                        <button type="submit" class="btn-action" style="background:var(--safe);color:#000;font-weight:600">
-                            ✓ Connect &amp; Scan Inbox Now →
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Tab 2: Google OAuth 2.0 -->
-            <div id="tabOAuthContent" style="display:none">
-                <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:20px;background:rgba(255,255,255,.02);padding:14px;border-left:2px solid var(--red)">
-                    <div style="font-weight:bold;color:var(--ink);margin-bottom:6px">Google Cloud OAuth 2.0 Setup:</div>
-                    1. Go to <a href="https://console.cloud.google.com/" target="_blank" style="color:var(--red);text-decoration:underline">Google Cloud Console</a>.<br>
-                    2. In <strong>APIs &amp; Services &gt; Library</strong>, enable <strong>Gmail API</strong>.<br>
-                    3. In <strong>Credentials</strong>, create an <strong>OAuth client ID</strong> (Web application).<br>
-                    4. Add Authorized Redirect URI: <code style="background:#000;padding:2px 6px;color:#fff">http://localhost:3000/auth/google/callback</code><br>
-                    5. Paste your <strong>Client ID</strong> and <strong>Client Secret</strong> below:
-                </div>
-
-                <form action="/admin/email-scanner/config-oauth" method="POST" style="display:flex;flex-direction:column;gap:16px;max-width:580px">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div>
-                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Google Client ID</label>
-                        <input type="text" name="clientId" placeholder="1234567890-abc.apps.googleusercontent.com" required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
-                    </div>
-                    <div>
-                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Google Client Secret</label>
-                        <input type="password" name="clientSecret" placeholder="GOCSPX-..." required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
-                    </div>
-                    <div>
-                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Authorized Redirect URI</label>
-                        <input type="text" name="redirectUri" value="http://localhost:3000/auth/google/callback" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--lab);font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
-                    </div>
-                    <div style="display:flex;gap:12px;margin-top:6px">
-                        <button type="submit" class="btn-action">
-                            Save &amp; Connect with Google OAuth →
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Tab 3: Direct Paste & Scan -->
-            <div id="tabPasteContent" style="display:none">
-                <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:20px;background:rgba(255,255,255,.02);padding:14px;border-left:2px solid #3b82f6">
-                    <div style="font-weight:bold;color:#fff;margin-bottom:6px">📝 Instant Threat &amp; Phishing Scanner (Zero Credentials Needed):</div>
-                    Paste the subject, sender, and body text of any suspicious email directly below to analyze phishing triggers, scan malicious links, detect leaked secrets, and generate an instant AI summary.
-                </div>
-
-                <form onsubmit="handleDirectScan(event)" style="display:flex;flex-direction:column;gap:16px;max-width:680px">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                        <div>
-                            <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Sender Email / Display Name</label>
-                            <input type="text" id="pSender" placeholder="security@paypal-verify.xyz" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
-                        </div>
-                        <div>
-                            <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Subject Line</label>
-                            <input type="text" id="pSubject" placeholder="Urgent: Verify your credentials" required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none">
-                        </div>
-                    </div>
-                    <div>
-                        <label style="display:block;font-family:'JB','JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lab);margin-bottom:6px">Email Body Text / Content</label>
-                        <textarea id="pBody" rows="5" placeholder="Paste the email content here to scan for phishing links, credential leaks, and social engineering lures..." required style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;font-family:'JB','JetBrains Mono',monospace;font-size:13px;padding:10px 14px;outline:none;resize:vertical"></textarea>
-                    </div>
-                    <div style="display:flex;gap:12px">
-                        <button type="submit" class="btn-action" id="scanTextBtn" style="background:#3b82f6;color:#fff">
-                            ⚡ Analyze Threat Report Now
-                        </button>
-                    </div>
-                </form>
+                <button type="button" id="btnExtensionSetup" class="btn-action" style="background:linear-gradient(135deg, #00E5FF, #0077B6);color:#0B0F19;font-weight:700;cursor:pointer" onclick="openExtensionModal(event)">
+                    <span>🛡️ Extension Setup</span>
+                </button>
+                <button type="button" id="btnEmlUpload" class="btn-action btn-secondary" style="cursor:pointer" onclick="openEmlModal(event)">
+                    <span>📂 Upload .EML</span>
+                </button>
+                <button type="button" id="btnTextScan" class="btn-action btn-secondary" style="cursor:pointer" onclick="openTextScanModal(event)">
+                    <span>📝 Text Scan</span>
+                </button>
+                <button type="button" id="btnDemoThreats" class="btn-action btn-secondary" style="cursor:pointer" onclick="triggerDemoScan(this)">
+                    <span>⚡ Demo Threats</span>
+                </button>
             </div>
         </div>
 
@@ -418,6 +556,7 @@
                 <thead>
                     <tr>
                         <th>Threat Level</th>
+                        <th>Classification</th>
                         <th>Sender</th>
                         <th>Subject & AI Executive Summary</th>
                         <th>Flags</th>
@@ -435,11 +574,25 @@
                         try { authArr = JSON.parse(scan.auth_issues || '[]'); } catch(e) {}
                         var leaksArr = [];
                         try { leaksArr = JSON.parse(scan.leaked_secrets || '[]'); } catch(e) {}
+                        var catKey = scan.classification_category || 'legitimate';
+                        var catLabels = {
+                            phishing: 'Phishing',
+                            bec_fraud: 'BEC Fraud',
+                            malware: 'Malware',
+                            spam: 'Spam',
+                            legitimate: 'Legitimate'
+                        };
+                        var confStr = scan.classification_confidence !== null && scan.classification_confidence !== undefined ? Math.round(scan.classification_confidence * 100) + '%' : '';
                     %>
                     <tr>
                         <td>
                             <span class="threat-badge threat-<%= scan.threat_level %>">
                                 <%= scan.threat_level %> (<%= scan.threat_score %>)
+                            </span>
+                        </td>
+                        <td>
+                            <span class="classification-pill class-<%= catKey %>" title="<%= catKey %> <%= confStr ? '(' + confStr + ')' : '' %>">
+                                <%= catLabels[catKey] || catKey %> <%= confStr ? '· ' + confStr : '' %>
                             </span>
                         </td>
                         <td>
@@ -485,6 +638,7 @@
                 <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
                     <span id="mCaseId" class="flags-tag" style="color:var(--red);border-color:var(--red)">INCIDENT REPORT</span>
                     <span id="mThreatBadge" class="threat-badge"></span>
+                    <span id="mClassBadge" class="classification-pill" style="display:none"></span>
                     <span id="mCvssBadge" class="flags-tag" style="color:#e4e4e7"></span>
                 </div>
                 <h3 id="mTitle" style="font-size:18px;font-weight:700;letter-spacing:-.4px;color:#fff"></h3>
@@ -493,10 +647,10 @@
                 <a id="mDossierLink" href="#" target="_blank" class="inspect-btn" style="color:#fff;border-color:rgba(255,255,255,.2)">
                     🖨️ Full Dossier / PDF ↗
                 </a>
-                <button type="button" class="inspect-btn" onclick="copyModalBrief()">
+                <button type="button" id="btnCopyBrief" class="inspect-btn" onclick="copyModalBrief(this)">
                     📋 Copy Brief
                 </button>
-                <button class="modal-close" onclick="closeThreatInspector()">✕</button>
+                <button type="button" id="btnCloseThreatModal" class="modal-close" data-close-modal="threatModal" onclick="closeThreatInspector(event)" aria-label="Close modal">✕</button>
             </div>
         </div>
 
@@ -594,6 +748,209 @@
                 </div>
             </div>
         </div>
+        <div class="modal-footer" style="padding:14px 28px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:12px;background:#09090b">
+            <button type="button" id="btnDismissThreatBottom" class="btn-action btn-secondary" style="font-size:12px;padding:8px 18px" data-close-modal="threatModal" onclick="closeThreatInspector(event)">
+                ✕ Close Inspector
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Chrome Extension Setup Modal -->
+<div class="modal-overlay" id="extensionModal">
+    <div class="modal-card" style="max-width:740px">
+        <div class="modal-header">
+            <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:36px;height:36px;background:rgba(0,229,255,.12);border:1px solid rgba(0,229,255,.3);display:flex;align-items:center;justify-content:center;font-size:18px">🛡️</div>
+                <div>
+                    <h3 style="font-size:18px;font-weight:700;color:#fff">Chrome Extension Setup & Activation</h3>
+                    <div style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:#00E5FF;margin-top:2px">
+                        ZERO PASSWORDS • ZERO OAUTH • LIVE IN GMAIL
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="btnCloseExtensionModal" class="modal-close" data-close-modal="extensionModal" onclick="closeExtensionModal(event)" aria-label="Close modal">✕</button>
+        </div>
+        <div class="modal-body" style="gap:18px">
+            <!-- Server Health Banner -->
+            <div style="background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.25);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div id="extServerDot" style="width:8px;height:8px;border-radius:50%;background:#00E5FF;box-shadow:0 0 10px #00E5FF"></div>
+                    <span id="extServerStatusText" style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:#fff">
+                        Telemetry Stream Endpoint: <strong style="color:#00E5FF">http://localhost:3000/api/extension/scan</strong>
+                    </span>
+                </div>
+                <span id="extServerBadge" style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:#00E5FF;background:rgba(0,229,255,.15);padding:3px 8px;border:1px solid rgba(0,229,255,.3)">● SERVER ONLINE</span>
+            </div>
+
+            <!-- Steps -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+                <!-- Step 1 -->
+                <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);padding:16px;display:flex;gap:14px">
+                    <div style="width:28px;height:28px;background:rgba(0,229,255,.15);color:#00E5FF;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600;font-size:14px;color:#fff;margin-bottom:4px">Open Chrome Extensions Manager</div>
+                        <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:10px;line-height:1.5">
+                            Open a new tab in Google Chrome, navigate to <code style="color:#00E5FF;background:rgba(255,255,255,.06);padding:2px 6px">chrome://extensions</code>, and turn on the <strong style="color:#fff">"Developer mode"</strong> toggle switch in the top-right corner.
+                        </div>
+                        <button type="button" id="btnCopyChromeUrl" class="btn-action btn-secondary" style="font-size:12px;padding:6px 14px" onclick="copyChromeExtensionsUrl(this)">
+                            <span>📋 Copy chrome://extensions</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);padding:16px;display:flex;gap:14px">
+                    <div style="width:28px;height:28px;background:rgba(0,229,255,.15);color:#00E5FF;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600;font-size:14px;color:#fff;margin-bottom:4px">Click "Load unpacked" & Select Extension Folder</div>
+                        <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:8px">
+                            Click the <strong style="color:#fff">"Load unpacked"</strong> button in Chrome Extensions, and select the folder below:
+                        </div>
+                        <div id="extensionPathDisplay" style="background:#000;border:1px solid var(--border);padding:10px 14px;font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:#00E5FF;word-break:break-all;margin-bottom:10px;user-select:all;-webkit-user-select:all;cursor:text" title="Click to select folder path">
+                            /Users/arpi85222707gmail.com/Documents/cybersec/extension
+                        </div>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap">
+                            <button type="button" id="btnCopyFolderPath" class="btn-action" style="background:#00E5FF;color:#0B0F19;font-weight:700;font-size:12px;padding:8px 14px" onclick="copyExtensionFolderPath(this)">
+                                <span>📋 Copy Folder Path</span>
+                            </button>
+                            <button type="button" id="btnRevealFinder" class="btn-action btn-secondary" style="font-size:12px;padding:8px 14px" onclick="revealExtensionInFinder(this)">
+                                <span>📂 Reveal in Mac Finder</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);padding:16px;display:flex;gap:14px">
+                    <div style="width:28px;height:28px;background:rgba(0,229,255,.15);color:#00E5FF;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600;font-size:14px;color:#fff;margin-bottom:4px">Open Gmail — Automatic Threat Protection</div>
+                        <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:10px;line-height:1.5">
+                            Open Gmail. Whenever you view any email, CyberSec injects an interactive Threat Assessment Banner right at the top, inspects all links and payloads, and streams the intelligence report to this dashboard in real-time!
+                        </div>
+                        <button type="button" id="btnLaunchGmail" class="btn-action btn-secondary" style="font-size:12px;padding:8px 16px" onclick="window.open('https://mail.google.com', '_blank')">
+                            <span>✉️ Launch Gmail in New Tab ↗</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Action Footer -->
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--border);margin-top:6px">
+                <button type="button" id="btnDoneExtensionModal" class="btn-action" style="background:rgba(255,255,255,.08);color:#fff;border:1px solid var(--border);padding:10px 22px;font-size:13px;cursor:pointer" data-close-modal="extensionModal" onclick="closeExtensionModal(event)">
+                    <span>✕ Close Window</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload .EML Message Modal -->
+<div class="modal-overlay" id="emlModal">
+    <div class="modal-card" style="max-width:680px">
+        <div class="modal-header">
+            <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:36px;height:36px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);display:flex;align-items:center;justify-content:center;font-size:18px">📂</div>
+                <div>
+                    <h3 style="font-size:18px;font-weight:700;color:#fff">Upload .EML / Raw Message</h3>
+                    <div style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--safe);margin-top:2px">
+                        MIME FORENSIC PARSER • RFC 822 AUDIT
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="btnCloseEmlModal" class="modal-close" data-close-modal="emlModal" onclick="closeEmlModal(event)" aria-label="Close modal">✕</button>
+        </div>
+        <div class="modal-body" style="gap:20px">
+            <p style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);line-height:1.6">
+                Upload raw email files exported from Gmail ("Download message"), Apple Mail, Outlook, Thunderbird, or security quarantine folders. All MIME headers, DKIM/SPF auth alignments, weaponized attachments, and phishing links will be unpacked and analyzed.
+            </p>
+
+            <div class="eml-dropzone" id="emlDropZone" onclick="document.getElementById('emlFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" style="border:2px dashed rgba(255,255,255,.2);padding:44px 20px;text-align:center;cursor:pointer;background:rgba(255,255,255,.02);transition:all .2s">
+                <div style="font-size:40px;margin-bottom:12px">📥</div>
+                <div id="emlDropTitle" style="font-size:15px;font-weight:600;color:#fff;margin-bottom:6px">
+                    Drag & Drop .EML or Message File Here
+                </div>
+                <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab)">
+                    or <span style="color:#00E5FF;text-decoration:underline">click to browse files</span> from your Mac
+                </div>
+                <input type="file" id="emlFileInput" accept=".eml,.txt,message/rfc822" style="display:none" onchange="handleFileSelect(event)">
+            </div>
+
+            <div id="emlUploadStatus" style="display:none;padding:12px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.3);font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:#00E5FF;text-align:center"></div>
+
+            <div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--border);margin-top:10px">
+                <button type="button" id="btnCancelEmlModal" class="btn-action btn-secondary" style="font-size:13px;padding:8px 20px;cursor:pointer" data-close-modal="emlModal" onclick="closeEmlModal(event)">
+                    <span>✕ Cancel & Close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Direct Text Threat Scan Modal -->
+<div class="modal-overlay" id="textScanModal">
+    <div class="modal-card" style="max-width:760px">
+        <div class="modal-header">
+            <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:36px;height:36px;background:rgba(200,27,28,.15);border:1px solid rgba(200,27,28,.3);display:flex;align-items:center;justify-content:center;font-size:18px">📝</div>
+                <div>
+                    <h3 style="font-size:18px;font-weight:700;color:#fff">Direct Text Threat Scan</h3>
+                    <div style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--red);margin-top:2px">
+                        HEURISTIC THREAT ENGINE & SECRET LEAK AUDITOR
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="btnCloseTextScanModal" class="modal-close" data-close-modal="textScanModal" onclick="closeTextScanModal(event)" aria-label="Close modal">✕</button>
+        </div>
+        <div class="modal-body" style="gap:16px">
+            <div>
+                <div style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;color:var(--lab);margin-bottom:8px">
+                    ⚡ Quick Test Pre-fills:
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button type="button" id="btnSamplePhish" class="btn-action btn-secondary" style="font-size:11px;padding:6px 12px" onclick="loadSampleScan('phish')">
+                        🎣 Phishing Lure
+                    </button>
+                    <button type="button" id="btnSampleSecret" class="btn-action btn-secondary" style="font-size:11px;padding:6px 12px" onclick="loadSampleScan('secret')">
+                        🔑 AWS & DB Leak
+                    </button>
+                    <button type="button" id="btnSamplePaypal" class="btn-action btn-secondary" style="font-size:11px;padding:6px 12px" onclick="loadSampleScan('paypal')">
+                        💳 Credential Harvest
+                    </button>
+                    <button type="button" id="btnSampleClean" class="btn-action btn-secondary" style="font-size:11px;padding:6px 12px" onclick="loadSampleScan('clean')">
+                        🛡️ Clean Corporate
+                    </button>
+                </div>
+            </div>
+
+            <form onsubmit="handleDirectScan(event)" style="display:flex;flex-direction:column;gap:14px">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div>
+                        <label style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);display:block;margin-bottom:6px">Claimed Sender Email</label>
+                        <input type="text" id="pSender" placeholder="billing@security-paypal-update.com" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;padding:10px 12px;font-family:'JB','JetBrains Mono',monospace;font-size:12px;outline:none">
+                    </div>
+                    <div>
+                        <label style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);display:block;margin-bottom:6px">Subject Line</label>
+                        <input type="text" id="pSubject" placeholder="URGENT: Suspicious Login Detected" style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;padding:10px 12px;font-family:'JB','JetBrains Mono',monospace;font-size:12px;outline:none">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);display:block;margin-bottom:6px">Email Message Body / Links / Secrets</label>
+                    <textarea id="pBody" rows="7" placeholder="Paste email content, phishing links (e.g. http://paypal-verify-auth.com), or sensitive tokens here..." style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:#fff;padding:10px 12px;font-family:'JB','JetBrains Mono',monospace;font-size:12px;outline:none;resize:vertical" required></textarea>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+                    <button type="submit" id="scanTextBtn" class="btn-action" style="background:var(--red);font-weight:600">
+                        <span>⚡ Analyze Threat Report Now</span>
+                    </button>
+                    <button type="button" id="btnCancelTextScan" class="btn-action btn-secondary" data-close-modal="textScanModal" onclick="closeTextScanModal(event)">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -626,7 +983,14 @@ function triggerLiveScan() {
     });
 }
 
-function triggerDemoScan() {
+function triggerDemoScan(btn) {
+    var triggerBtn = btn || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
+    var origText = triggerBtn ? triggerBtn.innerHTML : null;
+    if (triggerBtn) {
+        triggerBtn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Simulating Threats...';
+        triggerBtn.disabled = true;
+    }
+
     fetch('/admin/email-scanner/demo-scan', {
         method: 'POST',
         headers: { 'X-CSRF-Token': '<%= csrfToken %>' }
@@ -634,9 +998,20 @@ function triggerDemoScan() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (data.success) {
-            location.reload();
+            window.location.href = '/admin/email-scanner';
         } else {
-            alert('Error generating demo scan');
+            alert('Error generating demo scan: ' + (data.error || 'Failed to generate demo'));
+            if (triggerBtn) {
+                triggerBtn.innerHTML = origText;
+                triggerBtn.disabled = false;
+            }
+        }
+    })
+    .catch(function(err) {
+        alert('Network error generating demo simulation');
+        if (triggerBtn) {
+            triggerBtn.innerHTML = origText;
+            triggerBtn.disabled = false;
         }
     });
 }
@@ -673,6 +1048,17 @@ function openThreatInspector(id) {
         var scr = (report.classification?.threatScore !== undefined ? report.classification.threatScore : data.threat_score);
         tBadge.className = 'threat-badge threat-' + lvl;
         tBadge.textContent = lvl.toUpperCase() + ' (' + scr + '/100)';
+        
+        var cBadge = document.getElementById('mClassBadge');
+        if (data.classification_category) {
+            cBadge.style.display = 'inline-flex';
+            cBadge.className = 'classification-pill class-' + data.classification_category;
+            var confText = data.classification_confidence !== null && data.classification_confidence !== undefined ? ' (' + Math.round(data.classification_confidence * 100) + '%)' : '';
+            cBadge.textContent = data.classification_category.toUpperCase().replace('_', ' ') + confText;
+        } else {
+            cBadge.style.display = 'none';
+        }
+
         document.getElementById('mCvssBadge').textContent = 'CVSS: ' + (report.classification?.cvssScore || '0.0');
         document.getElementById('mTitle').textContent = report.classification?.attackType || data.subject;
 
@@ -815,7 +1201,7 @@ function openThreatInspector(id) {
     });
 }
 
-function copyModalBrief() {
+function copyModalBrief(btn) {
     if (!currentModalReport) return;
     var r = currentModalReport;
     var text = 'FORENSIC INCIDENT BRIEF: ' + (r.caseId || 'INCIDENT') + '\n' +
@@ -827,51 +1213,287 @@ function copyModalBrief() {
                'Subject: ' + (r.metadata?.subject || 'N/A') + '\n\n' +
                'Verdict:\n' + (r.executiveSummary?.verdict || '') + '\n\n' +
                'Technical Narrative:\n' + (r.executiveSummary?.technicalNarrative || '');
-    navigator.clipboard.writeText(text).then(function() {
-        alert('✓ Forensic incident brief copied to clipboard.');
-    }).catch(function() {
-        prompt('Copy report briefing:', text);
+
+    var triggerBtn = btn || document.getElementById('btnCopyBrief') || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
+    copyTextToClipboard(text, function(ok) {
+        if (triggerBtn) {
+            var orig = triggerBtn.innerHTML;
+            triggerBtn.innerHTML = '<span style="color:var(--safe);font-weight:700">✓ Brief Copied!</span>';
+            setTimeout(function() { triggerBtn.innerHTML = orig; }, 2500);
+        } else {
+            alert('✓ Forensic incident brief copied to clipboard.');
+        }
     });
 }
 
-function showConnectModal(tab) {
-    var card = document.getElementById('connectCard');
-    card.style.display = 'block';
-    switchConnTab(tab);
-    card.scrollIntoView({ behavior: 'smooth' });
+// ── Chrome Extension Setup Modal Controllers ──
+function openExtensionModal(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var modal = document.getElementById('extensionModal');
+    if (!modal) {
+        console.error('Modal #extensionModal not found in DOM');
+        return;
+    }
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.classList.add('active');
+
+    // Check extension backend stream health
+    try {
+        fetch('/api/extension/status')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var dot = document.getElementById('extServerDot');
+                var text = document.getElementById('extServerStatusText');
+                var badge = document.getElementById('extServerBadge');
+                if (data && data.online) {
+                    if (dot) dot.style.background = '#00E5FF';
+                    if (text) text.innerHTML = 'Telemetry Stream Endpoint: <strong style="color:#00E5FF">http://localhost:3000/api/extension/scan</strong> (' + (data.stats ? data.stats.totalScans : 0) + ' processed)';
+                    if (badge) {
+                        badge.textContent = '● SERVER ONLINE';
+                        badge.style.color = '#00E5FF';
+                        badge.style.borderColor = 'rgba(0,229,255,.3)';
+                    }
+                }
+            })
+            .catch(function(_) {});
+    } catch (_) {}
 }
 
-function switchConnTab(tab) {
-    var tabAppPassBtn = document.getElementById('tabAppPassBtn');
-    var tabOAuthBtn = document.getElementById('tabOAuthBtn');
-    var tabPasteBtn = document.getElementById('tabPasteBtn');
-    var tabAppPassContent = document.getElementById('tabAppPassContent');
-    var tabOAuthContent = document.getElementById('tabOAuthContent');
-    var tabPasteContent = document.getElementById('tabPasteContent');
+function closeExtensionModal(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+    var modal = document.getElementById('extensionModal');
+    if (modal) {
+        modal.style.setProperty('display', 'none', 'important');
+        modal.classList.remove('active');
+    }
+}
 
-    tabAppPassBtn.classList.remove('active');
-    tabOAuthBtn.classList.remove('active');
-    if (tabPasteBtn) tabPasteBtn.classList.remove('active');
-    tabAppPassContent.style.display = 'none';
-    tabOAuthContent.style.display = 'none';
-    if (tabPasteContent) tabPasteContent.style.display = 'none';
+function copyChromeExtensionsUrl(btn) {
+    var triggerBtn = btn || document.getElementById('btnCopyChromeUrl') || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
+    var url = 'chrome://extensions';
+    copyTextToClipboard(url, function(ok) {
+        if (triggerBtn) {
+            var orig = triggerBtn.getAttribute('data-orig-html') || triggerBtn.innerHTML;
+            triggerBtn.setAttribute('data-orig-html', orig);
+            triggerBtn.innerHTML = '<span style="color:#00E5FF;font-weight:700">✓ chrome://extensions Copied!</span>';
+            triggerBtn.style.borderColor = '#00E5FF';
+            setTimeout(function() {
+                triggerBtn.innerHTML = orig;
+                triggerBtn.style.borderColor = '';
+            }, 2500);
+        } else {
+            alert('✓ Copied chrome://extensions to clipboard!');
+        }
+    });
+}
 
-    if (tab === 'oauth') {
-        tabOAuthBtn.classList.add('active');
-        tabOAuthContent.style.display = 'block';
-    } else if (tab === 'paste') {
-        if (tabPasteBtn) tabPasteBtn.classList.add('active');
-        if (tabPasteContent) tabPasteContent.style.display = 'block';
-    } else {
-        tabAppPassBtn.classList.add('active');
-        tabAppPassContent.style.display = 'block';
+function copyExtensionFolderPath(btn) {
+    var triggerBtn = btn || document.getElementById('btnCopyFolderPath') || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
+    var folderPath = '/Users/arpi85222707gmail.com/Documents/cybersec/extension';
+    
+    var disp = document.getElementById('extensionPathDisplay');
+    if (disp) {
+        try {
+            var range = document.createRange();
+            range.selectNodeContents(disp);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } catch (_) {}
+    }
+
+    copyTextToClipboard(folderPath, function(ok) {
+        if (triggerBtn) {
+            var orig = triggerBtn.getAttribute('data-orig-html') || triggerBtn.innerHTML;
+            triggerBtn.setAttribute('data-orig-html', orig);
+            triggerBtn.innerHTML = '<span style="color:#0B0F19;font-weight:700">✓ Path Copied to Clipboard!</span>';
+            setTimeout(function() {
+                triggerBtn.innerHTML = orig;
+            }, 2500);
+        } else {
+            alert('✓ Copied Extension Folder Path to clipboard!');
+        }
+    });
+}
+
+function revealExtensionInFinder(btn) {
+    var triggerBtn = btn || document.getElementById('btnRevealFinder') || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
+    var orig = triggerBtn ? (triggerBtn.getAttribute('data-orig-html') || triggerBtn.innerHTML) : null;
+    if (triggerBtn) {
+        triggerBtn.setAttribute('data-orig-html', orig);
+        triggerBtn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Opening Finder...';
+        triggerBtn.disabled = true;
+    }
+
+    fetch('/api/extension/reveal-finder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            if (triggerBtn) {
+                triggerBtn.innerHTML = '<span style="color:#00E5FF">✓ Opened in Finder!</span>';
+                setTimeout(function() {
+                    triggerBtn.innerHTML = orig;
+                    triggerBtn.disabled = false;
+                }, 2500);
+            }
+        } else {
+            alert('Could not open Finder: ' + (data.error || 'Unknown error'));
+            if (triggerBtn) {
+                triggerBtn.innerHTML = orig;
+                triggerBtn.disabled = false;
+            }
+        }
+    })
+    .catch(function(err) {
+        alert('Network error revealing folder in Finder');
+        if (triggerBtn) {
+            triggerBtn.innerHTML = orig;
+            triggerBtn.disabled = false;
+        }
+    });
+}
+
+// ── EML Upload Modal Controllers ──
+function openEmlModal(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var modal = document.getElementById('emlModal');
+    if (!modal) return;
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.classList.add('active');
+}
+
+function closeEmlModal(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+    var modal = document.getElementById('emlModal');
+    if (modal) {
+        modal.style.setProperty('display', 'none', 'important');
+        modal.classList.remove('active');
+    }
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    var dropZone = document.getElementById('emlDropZone');
+    if (dropZone) dropZone.style.borderColor = 'var(--safe)';
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    var dropZone = document.getElementById('emlDropZone');
+    if (dropZone) dropZone.style.borderColor = 'rgba(255,255,255,.2)';
+}
+
+function handleFileDrop(e) {
+    e.preventDefault();
+    var dropZone = document.getElementById('emlDropZone');
+    if (dropZone) dropZone.style.borderColor = 'rgba(255,255,255,.2)';
+    if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+        processEmlFile(e.dataTransfer.files[0]);
+    }
+}
+
+function handleFileSelect(e) {
+    if (e.target.files && e.target.files.length > 0) {
+        processEmlFile(e.target.files[0]);
+    }
+}
+
+function processEmlFile(file) {
+    var status = document.getElementById('emlUploadStatus');
+    var title = document.getElementById('emlDropTitle');
+    
+    if (title) title.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Uploading ' + file.name + '...';
+    if (status) {
+        status.style.display = 'block';
+        status.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Parsing MIME headers, attachments & SPF/DKIM verification...';
+    }
+
+    var reader = new FileReader();
+    reader.onload = function(evt) {
+        var content = evt.target.result;
+        fetch('/admin/email-scanner/upload-eml', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'message/rfc822',
+                'X-CSRF-Token': '<%= csrfToken %>'
+            },
+            body: content
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                if (status) status.innerHTML = '<span style="color:var(--safe)">✓ Email parsed & threat report generated! Refreshing...</span>';
+                setTimeout(function() {
+                    window.location.href = '/admin/email-scanner';
+                }, 800);
+            } else {
+                alert('EML Analysis Error: ' + (data.error || 'Failed to parse'));
+                if (title) title.textContent = 'Drag & Drop .EML or Message File Here';
+                if (status) status.style.display = 'none';
+            }
+        })
+        .catch(function(err) {
+            alert('Upload error analyzing EML file');
+            if (title) title.textContent = 'Drag & Drop .EML or Message File Here';
+            if (status) status.style.display = 'none';
+        });
+    };
+    reader.readAsText(file);
+}
+
+// ── Direct Text Scan Modal Controllers ──
+function openTextScanModal(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var modal = document.getElementById('textScanModal');
+    if (!modal) return;
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.classList.add('active');
+}
+
+function closeTextScanModal(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+    var modal = document.getElementById('textScanModal');
+    if (modal) {
+        modal.style.setProperty('display', 'none', 'important');
+        modal.classList.remove('active');
+    }
+}
+
+function loadSampleScan(type) {
+    var sender = document.getElementById('pSender');
+    var subject = document.getElementById('pSubject');
+    var body = document.getElementById('pBody');
+
+    if (type === 'phish') {
+        sender.value = 'security-alert@service-paypal-verify.com';
+        subject.value = 'URGENT: Suspicious Login Detected from Moscow, Russia';
+        body.value = 'Dear Customer,\n\nWe detected an unauthorized sign-in attempt to your PayPal account from IP 185.220.101.5 (Moscow, Russia).\n\nYour account has been temporarily restricted to protect your financial balance ($4,250.00 USD).\n\nTo verify your identity and restore access, click the secure verification link immediately:\nhttp://verify-paypal-security-update.com/login?token=89fbc0018d9e\n\nFailure to verify within 24 hours will result in permanent suspension.\n\nSecurity Operations Team\nPayPal Protection Services';
+    } else if (type === 'secret') {
+        sender.value = 'devops-lead@company-internal.net';
+        subject.value = 'Production deployment configs & AWS API keys';
+        body.value = 'Hey team,\n\nHere are the updated production credentials for tonight\'s cloud deployment:\n\nAWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE\nAWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\nDATABASE_URL=postgres://admin:SuperSecretPass123!@db-prod.internal.corp:5432/main\n\nPlease do NOT share these outside engineering.';
+    } else if (type === 'paypal') {
+        sender.value = 'billing-support@accounts-crypto-notice.org';
+        subject.value = 'Payment Confirmation: Transaction #TX-984021 Approved';
+        body.value = 'Hello Customer,\n\nYou have successfully sent 0.45 BTC ($28,500.00 USD) to Wallet 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa.\n\nIf you did NOT authorize this transaction, contact fraud prevention immediately at:\nhttp://helpdesk-dispute-cancellation.cc/dispute?id=TX-984021\n\nFraud Helpdesk Line: +1-888-555-0199';
+    } else if (type === 'clean') {
+        sender.value = 'alice@cybersec-enterprise.com';
+        subject.value = 'Q4 Cybersecurity Architecture Sync & Roadmap';
+        body.value = 'Hi Team,\n\nHope you\'re having a productive week.\n\nLet\'s meet tomorrow at 10:00 AM UTC to review the SOC telemetry and SIEM integration roadmap for Q4.\n\nAgenda:\n1. Threat intelligence feed enhancements\n2. Gmail extension rollout status\n3. Zero-trust access policies\n\nBest regards,\nAlice Bennett\nSecurity Director';
     }
 }
 
 function handleDirectScan(e) {
     e.preventDefault();
     var btn = document.getElementById('scanTextBtn');
-    btn.textContent = 'Analyzing Threat...';
+    var origText = btn.innerHTML;
+    btn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Analyzing Threat...';
     btn.disabled = true;
 
     var sender = document.getElementById('pSender').value;
@@ -882,6 +1504,7 @@ function handleDirectScan(e) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-Token': '<%= csrfToken %>'
         },
         body: JSON.stringify({ sender: sender, subject: subject, body_text: body })
@@ -889,27 +1512,215 @@ function handleDirectScan(e) {
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (data.success) {
-            location.reload();
+            window.location.href = '/admin/email-scanner';
         } else {
             alert('Scan error: ' + (data.error || 'Failed to analyze text'));
-            btn.textContent = '⚡ Analyze Threat Report Now';
+            btn.innerHTML = origText;
             btn.disabled = false;
         }
     })
     .catch(function(err) {
-        alert('Network error during scan');
-        btn.textContent = '⚡ Analyze Threat Report Now';
+        alert('Network error during threat scan');
+        btn.innerHTML = origText;
         btn.disabled = false;
     });
 }
 
-function closeThreatInspector() {
-    document.getElementById('threatModal').classList.remove('active');
+// ── Forensic Inspector Dismissal ──
+function closeThreatInspector(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+    var modal = document.getElementById('threatModal');
+    if (modal) {
+        modal.style.setProperty('display', 'none', 'important');
+        modal.classList.remove('active');
+    }
 }
 
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeThreatInspector();
+// ── Global Dismissal (Backdrop Click & ESC Key) ──
+document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) {
+            overlay.style.setProperty('display', 'none', 'important');
+            overlay.classList.remove('active');
+        }
+    });
 });
+
+document.querySelectorAll('.modal-card').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+        if (e.target === card || (!e.target.closest('button') && !e.target.closest('a') && !e.target.closest('input') && !e.target.closest('textarea') && !e.target.closest('.modal-close') && !e.target.closest('[data-close-modal]'))) {
+            e.stopPropagation();
+        }
+    });
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeThreatInspector();
+        closeExtensionModal();
+        closeEmlModal();
+        closeTextScanModal();
+    }
+});
+
+// ── Explicit Global Window Assignments ──
+window.openExtensionModal = openExtensionModal;
+window.closeExtensionModal = closeExtensionModal;
+window.copyChromeExtensionsUrl = copyChromeExtensionsUrl;
+window.copyExtensionFolderPath = copyExtensionFolderPath;
+window.revealExtensionInFinder = revealExtensionInFinder;
+window.openEmlModal = openEmlModal;
+window.closeEmlModal = closeEmlModal;
+window.openTextScanModal = openTextScanModal;
+window.closeTextScanModal = closeTextScanModal;
+window.loadSampleScan = loadSampleScan;
+window.handleDirectScan = handleDirectScan;
+window.triggerDemoScan = triggerDemoScan;
+window.closeThreatInspector = closeThreatInspector;
+window.copyModalBrief = copyModalBrief;
+window.switchModalTab = switchModalTab;
+
+// ── Universal Capture-Phase Event Guard ──
+// Intercepts and executes actions during the capture descent phase, guaranteed to run before any stopPropagation
+document.addEventListener('click', function(e) {
+    // 1. Any Close Button or Data-Close-Modal target
+    var closeBtn = e.target.closest('.modal-close, [data-close-modal]');
+    if (closeBtn) {
+        if (e.preventDefault) e.preventDefault();
+        var targetId = closeBtn.getAttribute('data-close-modal');
+        var modal = targetId ? document.getElementById(targetId) : null;
+        if (!modal) modal = closeBtn.closest('.modal-overlay');
+        if (modal) {
+            modal.style.setProperty('display', 'none', 'important');
+            modal.classList.remove('active');
+        }
+        return false;
+    }
+
+    // 2. Copy Chrome Extensions URL
+    var copyChromeBtn = e.target.closest('#btnCopyChromeUrl');
+    if (copyChromeBtn) {
+        if (e.preventDefault) e.preventDefault();
+        copyChromeExtensionsUrl(copyChromeBtn);
+        return false;
+    }
+
+    // 3. Copy Extension Folder Path
+    var copyFolderBtn = e.target.closest('#btnCopyFolderPath');
+    if (copyFolderBtn) {
+        if (e.preventDefault) e.preventDefault();
+        copyExtensionFolderPath(copyFolderBtn);
+        return false;
+    }
+
+    // 4. Reveal in Finder
+    var revealBtn = e.target.closest('#btnRevealFinder');
+    if (revealBtn) {
+        if (e.preventDefault) e.preventDefault();
+        revealExtensionInFinder(revealBtn);
+        return false;
+    }
+
+    // 5. Copy Brief in Threat Inspector
+    var copyBriefBtn = e.target.closest('#btnCopyBrief');
+    if (copyBriefBtn) {
+        if (e.preventDefault) e.preventDefault();
+        copyModalBrief(copyBriefBtn);
+        return false;
+    }
+
+    // 6. Launch Gmail in new tab
+    var gmailBtn = e.target.closest('#btnLaunchGmail');
+    if (gmailBtn) {
+        if (e.preventDefault) e.preventDefault();
+        window.open('https://mail.google.com', '_blank');
+        return false;
+    }
+}, true); // Capture phase: true
+
+function attachModalTriggers() {
+    function bindClick(id, handler) {
+        var el = typeof id === 'string' ? document.getElementById(id) : id;
+        if (!el) return;
+        el.onclick = function(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            handler(e, el);
+            return false;
+        };
+        el.addEventListener('click', function(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            handler(e, el);
+        });
+    }
+
+    // Top action bar modal openers
+    bindClick('btnExtensionSetup', function(e) { openExtensionModal(e); });
+    bindClick('btnEmlUpload', function(e) { openEmlModal(e); });
+    bindClick('btnTextScan', function(e) { openTextScanModal(e); });
+    bindClick('btnDemoThreats', function(e, el) { triggerDemoScan(el); });
+
+    // Extension setup modal inner controls
+    bindClick('btnCloseExtensionModal', function(e) { closeExtensionModal(e); });
+    bindClick('btnDoneExtensionModal', function(e) { closeExtensionModal(e); });
+    bindClick('btnCopyChromeUrl', function(e, el) { copyChromeExtensionsUrl(el); });
+    bindClick('btnCopyFolderPath', function(e, el) { copyExtensionFolderPath(el); });
+    bindClick('btnRevealFinder', function(e, el) { revealExtensionInFinder(el); });
+    bindClick('btnLaunchGmail', function() { window.open('https://mail.google.com', '_blank'); });
+
+    // EML upload modal inner controls
+    bindClick('btnCloseEmlModal', function(e) { closeEmlModal(e); });
+    bindClick('btnCancelEmlModal', function(e) { closeEmlModal(e); });
+
+    // Text scan modal inner controls
+    bindClick('btnCloseTextScanModal', function(e) { closeTextScanModal(e); });
+    bindClick('btnCancelTextScan', function(e) { closeTextScanModal(e); });
+    bindClick('btnSamplePhish', function() { loadSampleScan('phish'); });
+    bindClick('btnSampleSecret', function() { loadSampleScan('secret'); });
+    bindClick('btnSamplePaypal', function() { loadSampleScan('paypal'); });
+    bindClick('btnSampleClean', function() { loadSampleScan('clean'); });
+
+    // Threat inspector modal inner controls
+    bindClick('btnCloseThreatModal', function(e) { closeThreatInspector(e); });
+    bindClick('btnDismissThreatBottom', function(e) { closeThreatInspector(e); });
+    bindClick('btnCopyBrief', function(e, el) { copyModalBrief(el); });
+    bindClick('tabBtnOverview', function() { switchModalTab('overview'); });
+    bindClick('tabBtnIoc', function() { switchModalTab('ioc'); });
+    bindClick('tabBtnMitre', function() { switchModalTab('mitre'); });
+    bindClick('tabBtnPlaybook', function() { switchModalTab('playbook'); });
+    bindClick('tabBtnRaw', function() { switchModalTab('raw'); });
+
+    // Universal close buttons query
+    document.querySelectorAll('.modal-close, [data-close-modal]').forEach(function(btn) {
+        btn.onclick = function(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            var targetId = btn.getAttribute('data-close-modal');
+            var m = targetId ? document.getElementById(targetId) : null;
+            if (!m) m = btn.closest('.modal-overlay');
+            if (m) {
+                m.style.setProperty('display', 'none', 'important');
+                m.classList.remove('active');
+            }
+            return false;
+        };
+        btn.addEventListener('click', function(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            var targetId = btn.getAttribute('data-close-modal');
+            var m = targetId ? document.getElementById(targetId) : null;
+            if (!m) m = btn.closest('.modal-overlay');
+            if (m) {
+                m.style.setProperty('display', 'none', 'important');
+                m.classList.remove('active');
+            }
+        });
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachModalTriggers);
+} else {
+    attachModalTriggers();
+}
 </script>
 </body>
 </html>

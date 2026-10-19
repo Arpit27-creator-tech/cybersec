@@ -142,12 +142,14 @@ async function fetchAndScanGmail(authClient, accountId, maxResults = 12) {
       account_id, message_id, thread_id, sender, sender_name, recipient,
       subject, date, snippet, body_text, summary, threat_score, threat_level,
       is_phishing, phishing_reasons, malicious_links, suspicious_attachments,
-      leaked_secrets, auth_issues, scanned_at
+      leaked_secrets, auth_issues, classification_category, classification_confidence,
+      classification_details, scanned_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
-      ?, ?, CURRENT_TIMESTAMP
+      ?, ?, ?, ?,
+      ?, CURRENT_TIMESTAMP
     )
     ON CONFLICT(message_id) DO UPDATE SET
       subject = excluded.subject,
@@ -163,6 +165,9 @@ async function fetchAndScanGmail(authClient, accountId, maxResults = 12) {
       suspicious_attachments = excluded.suspicious_attachments,
       leaked_secrets = excluded.leaked_secrets,
       auth_issues = excluded.auth_issues,
+      classification_category = excluded.classification_category,
+      classification_confidence = excluded.classification_confidence,
+      classification_details = excluded.classification_details,
       summary = excluded.summary,
       scanned_at = CURRENT_TIMESTAMP
   `);
@@ -229,7 +234,10 @@ async function fetchAndScanGmail(authClient, accountId, maxResults = 12) {
         threatReport.malicious_links,
         threatReport.suspicious_attachments,
         threatReport.leaked_secrets,
-        threatReport.auth_issues
+        threatReport.auth_issues,
+        threatReport.classification_category || 'legitimate',
+        threatReport.classification_confidence || 0,
+        threatReport.classification_details || '{}'
       );
 
       return {
@@ -328,12 +336,14 @@ function generateDemoThreatEmails(accountId) {
       account_id, message_id, thread_id, sender, sender_name, recipient,
       subject, date, snippet, body_text, summary, threat_score, threat_level,
       is_phishing, phishing_reasons, malicious_links, suspicious_attachments,
-      leaked_secrets, auth_issues, scanned_at
+      leaked_secrets, auth_issues, classification_category, classification_confidence,
+      classification_details, scanned_at
     ) VALUES (
       ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
-      ?, ?, CURRENT_TIMESTAMP
+      ?, ?, ?, ?,
+      ?, CURRENT_TIMESTAMP
     )
     ON CONFLICT(message_id) DO UPDATE SET
       threat_score = excluded.threat_score,
@@ -344,6 +354,9 @@ function generateDemoThreatEmails(accountId) {
       suspicious_attachments = excluded.suspicious_attachments,
       leaked_secrets = excluded.leaked_secrets,
       auth_issues = excluded.auth_issues,
+      classification_category = excluded.classification_category,
+      classification_confidence = excluded.classification_confidence,
+      classification_details = excluded.classification_details,
       summary = excluded.summary,
       scanned_at = CURRENT_TIMESTAMP
   `);
@@ -358,6 +371,8 @@ function generateDemoThreatEmails(accountId) {
       headers: sample.headers,
       attachments: sample.attachments
     });
+
+    const classification = threatReport.classification || {};
 
     insertScan.run(
       accountId || null,
@@ -378,7 +393,10 @@ function generateDemoThreatEmails(accountId) {
       threatReport.malicious_links,
       threatReport.suspicious_attachments,
       threatReport.leaked_secrets,
-      threatReport.auth_issues
+      threatReport.auth_issues,
+      classification.category || 'legitimate',
+      classification.confidence !== undefined ? classification.confidence : 0.95,
+      JSON.stringify(classification),
     );
 
     results.push({

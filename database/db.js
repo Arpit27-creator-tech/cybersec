@@ -95,6 +95,9 @@ db.exec(`
     suspicious_attachments TEXT,
     leaked_secrets TEXT,
     auth_issues TEXT,
+    classification_category TEXT DEFAULT 'legitimate',
+    classification_confidence REAL DEFAULT 0,
+    classification_details TEXT,
     scanned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (account_id) REFERENCES email_accounts(id) ON DELETE CASCADE
   );
@@ -112,6 +115,31 @@ db.exec(`
   BEGIN
     UPDATE site_stats SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
   END;
+
+  CREATE TABLE IF NOT EXISTS scanner_daemon (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    is_enabled INTEGER DEFAULT 1,
+    interval_minutes INTEGER DEFAULT 5,
+    last_run_at DATETIME,
+    last_status TEXT DEFAULT 'idle',
+    last_items_scanned INTEGER DEFAULT 0,
+    last_threats_detected INTEGER DEFAULT 0
+  );
+
+  INSERT OR IGNORE INTO scanner_daemon (id, is_enabled, interval_minutes, last_status) VALUES (1, 1, 5, 'idle');
 `);
+
+// Safe runtime migration for existing databases
+try {
+  db.exec("ALTER TABLE email_scans ADD COLUMN classification_category TEXT DEFAULT 'legitimate';");
+} catch (_) {}
+
+try {
+  db.exec("ALTER TABLE email_scans ADD COLUMN classification_confidence REAL DEFAULT 0;");
+} catch (_) {}
+
+try {
+  db.exec("ALTER TABLE email_scans ADD COLUMN classification_details TEXT;");
+} catch (_) {}
 
 module.exports = db;

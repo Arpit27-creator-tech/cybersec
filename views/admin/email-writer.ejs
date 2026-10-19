@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Email Writer Studio — CyberSec Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @font-face{font-family:'SG';src:local('Space Grotesk');font-display:swap}
+        @font-face{font-family:'JB';src:local('JetBrains Mono');font-display:swap}
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        html{min-height:100%;background:#08080a}
+        body{-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision;color:#fff;font-family:'SG','Space Grotesk',sans-serif}
+        a{color:inherit;text-decoration:none}
+        :root{
+            --red:#c81b1c;--red-glow:rgba(200,27,28,.35);
+            --ink:#fff;--sub:#d4d4d8;--lab:#71717a;
+            --card:#111115;--card-alt:#16161c;--border:rgba(255,255,255,.08);--border-focus:rgba(200,27,28,.6);
+            --accent-cyan:#00e5ff;--accent-purple:#a855f7;--accent-emerald:#10b981;--accent-amber:#f59e0b;
+        }
+        
+        .shell{display:flex;min-height:100vh}
+        .side{width:240px;background:#09090b;border-right:1px solid var(--border);padding:28px 20px;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+        .side-logo{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+        .side-logo svg{width:32px;height:32px}
+        .side-logo span{font-weight:700;font-size:16px;letter-spacing:-.4px}
+        .side-nav{display:flex;flex-direction:column;gap:4px}
+        .side-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);transition:all .2s;border-left:2px solid transparent}
+        .side-nav a:hover,.side-nav a.active{color:var(--ink);background:rgba(255,255,255,.04);border-left-color:var(--red)}
+        .side-nav a.active{color:var(--red)}
+        .side-nav .sep{height:1px;background:var(--border);margin:16px 0}
+        .side-bottom{margin-top:auto;padding-top:20px;border-top:1px solid var(--border)}
+        .side-user{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:12px}
+        .side-user strong{color:var(--ink);display:block;font-size:13px;margin-bottom:2px}
+        .logout-btn{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);background:none;border:1px solid var(--border);padding:8px 14px;cursor:pointer;transition:all .2s;width:100%}
+        .logout-btn:hover{color:var(--red);border-color:var(--red)}
+
+        .main{flex:1;padding:32px 36px;overflow-x:hidden}
+        
+        /* Header */
+        .header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;gap:20px;flex-wrap:wrap}
+        .header-title h1{font-size:26px;font-weight:700;letter-spacing:-.8px;display:flex;align-items:center;gap:10px}
+        .header-title .subtitle{font-family:'JB','JetBrains Mono',monospace;font-size:13px;color:var(--lab);margin-top:4px}
+        
+        .header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+        .btn-action{
+            display:inline-flex;align-items:center;gap:8px;
+            background:var(--red);color:#fff;border:none;cursor:pointer;
+            padding:10px 18px;font-family:'SG','Space Grotesk',sans-serif;font-weight:600;font-size:13px;
+            transition:all .2s;border-radius:2px;
+        }
+        .btn-action:hover{background:#b01617;box-shadow:0 0 16px var(--red-glow)}
+        .btn-secondary{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--sub)}
+        .btn-secondary:hover{background:rgba(255,255,255,.1);color:#fff;box-shadow:none}
+
+        /* Engine Status Banner */
+        .engine-banner{
+            background:var(--card);border:1px solid var(--border);padding:14px 20px;
+            display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;
+            border-radius:2px;flex-wrap:wrap;gap:12px;
+        }
+        .engine-info{display:flex;align-items:center;gap:12px}
+        .engine-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-emerald);box-shadow:0 0 8px var(--accent-emerald)}
+        .engine-title{font-size:14px;font-weight:600}
+        .engine-sub{font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab)}
+        .engine-pill{
+            font-family:'JB','JetBrains Mono',monospace;font-size:11px;padding:4px 10px;
+            border-radius:12px;background:rgba(16,185,129,.15);color:var(--accent-emerald);
+            border:1px solid rgba(16,185,129,.3);display:inline-flex;align-items:center;gap:6px;
+        }
+
+        /* 2-Column Composer Grid */
+        .writer-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:24px;margin-bottom:36px}
+        @media (max-width:1160px){.writer-grid{grid-template-columns:1fr}}
+
+        .panel{background:var(--card);border:1px solid var(--border);padding:24px;border-radius:2px;position:relative}
+        .panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+        .panel-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px}
+        .panel-badge{font-family:'JB','JetBrains Mono',monospace;font-size:11px;padding:3px 8px;background:rgba(255,255,255,.06);color:var(--sub);border:1px solid var(--border)}
+
+        /* Purpose Chips Grid */
+        .section-label{font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+        .purpose-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:18px}
+        .purpose-btn{
+            background:rgba(255,255,255,.03);border:1px solid var(--border);color:var(--sub);
+            padding:9px 10px;border-radius:2px;cursor:pointer;text-align:left;font-family:'SG','Space Grotesk',sans-serif;
+            transition:all .15s;display:flex;flex-direction:column;gap:4px;
+        }
+        .purpose-btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#fff}
+        .purpose-btn.active{background:rgba(200,27,28,.15);border-color:var(--red);color:#fff}
+        .p-icon{font-size:16px}
+        .p-name{font-size:12px;font-weight:600;line-height:1.2}
+
+        /* Tone Chips */
+        .tone-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+        .tone-chip{
+            font-family:'JB','JetBrains Mono',monospace;font-size:12px;padding:6px 12px;
+            background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--sub);
+            cursor:pointer;border-radius:2px;transition:all .15s;
+        }
+        .tone-chip:hover{background:rgba(255,255,255,.1);color:#fff}
+        .tone-chip.active{background:rgba(200,27,28,.18);border-color:var(--red);color:#fff}
+
+        /* Form Inputs */
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+        .form-group{margin-bottom:14px}
+        .form-label{display:block;font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--sub);margin-bottom:6px}
+        .form-input,.form-textarea,.form-select{
+            width:100%;background:#09090b;border:1px solid var(--border);color:#fff;
+            padding:10px 14px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;
+            outline:none;transition:border-color .2s;border-radius:2px;box-sizing:border-box;
+        }
+        .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--border-focus);background:#0d0d10}
+        .form-textarea{resize:vertical;min-height:120px;line-height:1.5}
+        .meta-helper{display:flex;justify-content:space-between;font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);margin-top:4px}
+
+        /* Length Radios */
+        .length-group{display:flex;gap:10px;margin-bottom:18px}
+        .length-opt{
+            flex:1;background:rgba(255,255,255,.03);border:1px solid var(--border);padding:8px 10px;
+            border-radius:2px;cursor:pointer;text-align:center;font-family:'JB','JetBrains Mono',monospace;font-size:11px;
+            color:var(--sub);transition:all .15s;
+        }
+        .length-opt:hover{color:#fff;background:rgba(255,255,255,.07)}
+        .length-opt.active{border-color:var(--red);color:#fff;background:rgba(200,27,28,.15)}
+
+        /* Output Canvas */
+        .output-empty{
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            min-height:440px;text-align:center;color:var(--lab);padding:40px 20px;
+        }
+        .output-empty svg{width:48px;height:48px;margin-bottom:14px;opacity:.35}
+        .output-empty p{font-size:14px;max-width:320px;line-height:1.5}
+
+        /* Subject Lines Picker */
+        .subjects-section{margin-bottom:18px}
+        .subject-cards{display:flex;flex-direction:column;gap:8px}
+        .subject-card{
+            background:#0c0c10;border:1px solid var(--border);padding:10px 14px;
+            border-radius:2px;cursor:pointer;transition:all .15s;display:flex;justify-content:space-between;align-items:center;gap:12px;
+        }
+        .subject-card:hover{border-color:rgba(255,255,255,.25);background:#131318}
+        .subject-card.active{border-color:var(--red);background:rgba(200,27,28,.1)}
+        .subj-text{font-size:13px;font-weight:600;color:#fff}
+        .subj-badge{font-family:'JB','JetBrains Mono',monospace;font-size:10px;color:var(--lab);padding:2px 6px;background:rgba(255,255,255,.05);border-radius:2px;white-space:nowrap}
+
+        /* Email Body Canvas */
+        .canvas-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        .canvas-tabs{display:flex;gap:6px}
+        .canvas-tab{
+            font-family:'JB','JetBrains Mono',monospace;font-size:11px;padding:4px 10px;
+            background:none;border:1px solid var(--border);color:var(--lab);cursor:pointer;border-radius:2px;
+        }
+        .canvas-tab.active{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.3)}
+        
+        .email-editor{
+            width:100%;min-height:280px;background:#09090b;border:1px solid var(--border);color:#fff;
+            padding:16px 18px;font-family:'SG','Space Grotesk',sans-serif;font-size:14px;line-height:1.6;
+            outline:none;border-radius:2px;resize:vertical;white-space:pre-wrap;box-sizing:border-box;
+        }
+        .email-editor:focus{border-color:var(--border-focus)}
+
+        .email-preview-box{
+            min-height:280px;background:#ffffff;color:#18181b;padding:22px;border-radius:2px;
+            line-height:1.6;font-size:14px;overflow-y:auto;display:none;
+        }
+
+        /* Telemetry Footer */
+        .canvas-telemetry{
+            display:flex;justify-content:space-between;align-items:center;margin:12px 0 18px;
+            font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);flex-wrap:wrap;gap:8px;
+        }
+        .telemetry-item{display:flex;align-items:center;gap:6px}
+        .telemetry-item strong{color:var(--sub)}
+
+        /* Action Buttons Row */
+        .action-row{display:flex;gap:10px;flex-wrap:wrap}
+
+        /* Quick Refine Chips */
+        .refine-bar{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+        .refine-chips{display:flex;flex-wrap:wrap;gap:6px}
+        .refine-chip{
+            font-family:'JB','JetBrains Mono',monospace;font-size:11px;padding:4px 10px;
+            background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--sub);
+            cursor:pointer;border-radius:2px;transition:all .15s;
+        }
+        .refine-chip:hover{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.25)}
+
+        /* Next Steps Box */
+        .next-steps-card{background:var(--card-alt);border:1px solid var(--border);padding:14px 18px;margin-top:20px;border-radius:2px}
+        .next-steps-title{font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);text-transform:uppercase;margin-bottom:8px}
+        .next-steps-list{list-style:none;padding:0;margin:0;font-size:13px;color:var(--sub)}
+        .next-steps-list li{margin-bottom:6px;display:flex;align-items:center;gap:8px}
+        .next-steps-list li::before{content:'→';color:var(--red);font-family:'JB','JetBrains Mono',monospace}
+
+        /* API Key Modal */
+        .modal-overlay{
+            position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);
+            backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;
+            z-index:99999;padding:20px;
+        }
+        .modal-overlay.active{display:flex}
+        .modal-card{background:#111115;border:1px solid var(--border);width:100%;max-width:540px;padding:28px;border-radius:2px;position:relative}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+        .modal-title{font-size:18px;font-weight:700}
+        .modal-close{background:none;border:none;color:var(--lab);font-size:22px;cursor:pointer}
+        .modal-close:hover{color:#fff}
+
+        /* Toast Feedback */
+        .toast{
+            position:fixed;bottom:24px;right:24px;background:#18181b;border:1px solid var(--border);
+            padding:14px 20px;border-radius:2px;box-shadow:0 8px 30px rgba(0,0,0,.6);
+            display:flex;align-items:center;gap:12px;font-family:'JB','JetBrains Mono',monospace;font-size:13px;
+            transform:translateY(100px);opacity:0;transition:all .25s ease;z-index:999999;
+        }
+        .toast.show{transform:translateY(0);opacity:1}
+        .toast.success{border-left:3px solid var(--accent-emerald)}
+        .toast.error{border-left:3px solid var(--red)}
+    </style>
+</head>
+<body>
+
+<div class="shell">
+    <aside class="side">
+        <a href="/" class="side-logo">
+            <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg"><g stroke="#fff" stroke-width="3" stroke-linecap="butt"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(90,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(180,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g><g stroke="#fff" stroke-width="3" stroke-linecap="butt" transform="rotate(270,23,23)"><line x1="23" y1="0" x2="23" y2="19.5"/><polyline points="14,10.2 23,19.2 32,10.2" fill="none"/></g></svg>
+            <span>CyberSec</span>
+        </a>
+        <nav class="side-nav">
+            <a href="/admin">◆ Dashboard</a>
+            <a href="/admin/leads">◆ Leads</a>
+            <a href="/admin/newsletter">◆ Newsletter</a>
+            <a href="/admin/email-scanner">◆ Email Scanner</a>
+            <a href="/admin/email-classifier">◆ Email Classifier</a>
+            <a href="/admin/email-writer" class="active">◆ AI Email Writer</a>
+            <div class="sep"></div>
+            <a href="/admin/settings">◆ Settings</a>
+            <a href="/" target="_blank">◆ View Site</a>
+        </nav>
+        <div class="side-bottom">
+            <div class="side-user"><strong><%= user.username %></strong><%= user.role %></div>
+            <form action="/auth/logout" method="POST"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button type="submit" class="logout-btn">Sign out</button></form>
+        </div>
+    </aside>
+
+    <main class="main">
+        <!-- Top Bar -->
+        <div class="header-row">
+            <div class="header-title">
+                <h1>AI Email Writer Studio</h1>
+                <p class="subtitle">Custom Intent & Scenario Composer &bull; Multi-Variant Subject Line Engine &bull; Dual-Hybrid Intelligence</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-action btn-secondary" id="btnOpenApiKeyModal" onclick="openApiKeyModal()">
+                    <span>⚙️ AI Engine Keys</span>
+                </button>
+                <a href="/admin/email-classifier" class="btn-action btn-secondary">
+                    <span>🎯 Classifier Studio &rarr;</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Engine Status Banner -->
+        <div class="engine-banner">
+            <div class="engine-info">
+                <span class="engine-dot"></span>
+                <div>
+                    <div class="engine-title">
+                        <% if (hasGeminiKey) { %>
+                            Google Gemini 3.8 Flash — Human-Grade AI Active
+                        <% } else if (hasOpenaiKey) { %>
+                            OpenAI GPT-4o Mini Engine Active
+                        <% } else { %>
+                            Autonomous Contextual Neural Composer v3.2 Active (Local / Zero Latency)
+                        <% } %>
+                    </div>
+                    <div class="engine-sub">
+                        <% if (hasGeminiKey) { %>
+                            Connected via GEMINI_API_KEY (<%= geminiKeyMasked %>) &bull; Fallback engine armed
+                        <% } else if (hasOpenaiKey) { %>
+                            Connected via OPENAI_API_KEY (<%= openaiKeyMasked %>)
+                        <% } else { %>
+                            No external cloud API required. Ready to compose instantly. Optionally add a Gemini API key for advanced neural phrasing.
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <% if (hasGeminiKey || hasOpenaiKey) { %>
+                    <span class="engine-pill">☁️ Cloud LLM Mode</span>
+                <% } else { %>
+                    <span class="engine-pill" style="color:var(--accent-cyan);border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.1)">⚡ Instant Local Engine</span>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Composer Layout -->
+        <div class="writer-grid">
+            <!-- Left: Inputs & Parameters Workbench -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>✍️ Compose Requirements</span>
+                    </div>
+                    <span class="panel-badge">Interactive Prompting</span>
+                </div>
+
+                <form id="writerForm" onsubmit="handleGenerateSubmit(event)">
+                    <!-- Purpose Presets -->
+                    <div class="section-label">Select Purpose / Scenario:</div>
+                    <div class="purpose-grid" id="purposeGrid">
+                        <% purposes.forEach(function(p, idx) { %>
+                            <button type="button" class="purpose-btn <%= idx === 0 ? 'active' : '' %>" data-purpose="<%= p.id %>" onclick="selectPurpose('<%= p.id %>')">
+                                <span class="p-icon"><%= p.icon %></span>
+                                <span class="p-name"><%= p.name %></span>
+                            </button>
+                        <% }); %>
+                    </div>
+
+                    <!-- Core Prompt / Need -->
+                    <div class="form-group">
+                        <label class="form-label" for="inpPrompt">What should this email communicate? (Prompt / Key Points)</label>
+                        <textarea id="inpPrompt" class="form-textarea" placeholder="e.g. Advise our client that their annual penetration testing report has been completed. All critical vulnerabilities have been patched, and our team is ready to schedule a 30-minute debrief call..." required></textarea>
+                        <div class="meta-helper">
+                            <span id="charCount">0 characters</span>
+                            <span>Key points automatically incorporated</span>
+                        </div>
+                    </div>
+
+                    <!-- Tone Selector -->
+                    <div class="section-label">Voice & Tone:</div>
+                    <div class="tone-chips" id="toneChips">
+                        <% tones.forEach(function(t, idx) { %>
+                            <button type="button" class="tone-chip <%= idx === 0 ? 'active' : '' %>" data-tone="<%= t.id %>" onclick="selectTone('<%= t.id %>')">
+                                <%= t.name %>
+                            </button>
+                        <% }); %>
+                    </div>
+
+                    <!-- Audience & Length -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="selAudience">Target Audience</label>
+                            <select id="selAudience" class="form-select">
+                                <% audiences.forEach(function(a) { %>
+                                    <option value="<%= a.id %>"><%= a.name %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email Length</label>
+                            <div class="length-group" id="lengthGroup">
+                                <button type="button" class="length-opt" data-length="concise" onclick="selectLength('concise')">Concise</button>
+                                <button type="button" class="length-opt active" data-length="balanced" onclick="selectLength('balanced')">Balanced</button>
+                                <button type="button" class="length-opt" data-length="detailed" onclick="selectLength('detailed')">Detailed</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personalization -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="inpRecipient">Recipient Name (Optional)</label>
+                            <input type="text" id="inpRecipient" class="form-input" placeholder="e.g. Sarah Jenkins">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="inpSender">Your Name / Title (Optional)</label>
+                            <input type="text" id="inpSender" class="form-input" placeholder="e.g. Alex Rivera, SOC Lead">
+                        </div>
+                    </div>
+
+                    <!-- Call to Action -->
+                    <div class="form-group">
+                        <label class="form-label" for="inpCta">Desired Next Step / Call to Action (Optional)</label>
+                        <input type="text" id="inpCta" class="form-input" placeholder="e.g. Reply with your preferred times for a 20-min Zoom call">
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:20px">
+                        <button type="submit" class="btn-action" id="btnGenerate">
+                            <span>✨ Generate Email Now</span>
+                        </button>
+                        <button type="button" class="btn-action btn-secondary" id="btnResetForm" onclick="resetForm()">
+                            <span>Clear Input</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right: Generated Email Canvas & Subject Lines -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span>📬 Generated Email Canvas</span>
+                    </div>
+                    <span class="panel-badge" id="outputBadge">Awaiting Input</span>
+                </div>
+
+                <div id="outputContainer">
+                    <!-- Empty State -->
+                    <div class="output-empty" id="outputEmptyState">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <p>Enter your email intent on the left and click <strong>Generate Email</strong>. AI will produce tailored subject lines and a complete ready-to-send draft.</p>
+                    </div>
+
+                    <!-- Active Content Display -->
+                    <div id="outputContent" style="display:none">
+                        <!-- Subject Lines Section -->
+                        <div class="subjects-section">
+                            <div class="section-label">Select Subject Line Option:</div>
+                            <div class="subject-cards" id="subjectCards">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Canvas Controls -->
+                        <div class="canvas-toolbar">
+                            <div class="canvas-tabs">
+                                <button type="button" class="canvas-tab active" id="tabText" onclick="switchCanvasTab('text')">Plaintext Editor</button>
+                                <button type="button" class="canvas-tab" id="tabPreview" onclick="switchCanvasTab('preview')">HTML Preview</button>
+                            </div>
+                            <button type="button" class="btn-action btn-secondary" id="btnCopyActiveSubject" style="padding:4px 8px;font-size:11px" onclick="copyActiveSubject()">
+                                <span>Copy Subject</span>
+                            </button>
+                        </div>
+
+                        <!-- Editable Body -->
+                        <textarea id="emailEditor" class="email-editor" spellcheck="true"></textarea>
+                        <div id="emailPreviewBox" class="email-preview-box"></div>
+
+                        <!-- Telemetry Stats -->
+                        <div class="canvas-telemetry">
+                            <div class="telemetry-item">Words: <strong id="valWordCount">0</strong></div>
+                            <div class="telemetry-item">Read Time: <strong id="valReadTime">1 min</strong></div>
+                            <div class="telemetry-item">Engine: <strong id="valEngine">Autonomous v4.0</strong></div>
+                            <div class="telemetry-item">Tone: <strong id="valTone">Professional</strong></div>
+                        </div>
+
+                        <!-- Action Toolbar -->
+                        <div class="action-row">
+                            <button type="button" class="btn-action" id="btnCopyFullEmail" onclick="copyFullEmail()">
+                                <span>📋 Copy Email to Clipboard</span>
+                            </button>
+                            <button type="button" class="btn-action btn-secondary" id="btnOpenGmail" onclick="openInGmail()">
+                                <span>✉️ Open in Gmail</span>
+                            </button>
+                        </div>
+
+                        <!-- Quick Refine Section -->
+                        <div class="refine-bar">
+                            <div class="section-label">Quick Refinements:</div>
+                            <div class="refine-chips">
+                                <button type="button" class="refine-chip" data-refine-tone="urgent" onclick="refineTone('urgent')">⚡ Make More Urgent</button>
+                                <button type="button" class="refine-chip" data-refine-tone="formal" onclick="refineTone('formal')">👔 Make More Formal</button>
+                                <button type="button" class="refine-chip" data-refine-tone="friendly" onclick="refineTone('friendly')">🤝 Make More Friendly</button>
+                                <button type="button" class="refine-chip" data-refine-length="concise" onclick="refineLength('concise')">✂️ Shorten Draft</button>
+                                <button type="button" class="refine-chip" data-refine-length="detailed" onclick="refineLength('detailed')">📝 Expand with Details</button>
+                            </div>
+                        </div>
+
+                        <!-- Next Steps Advice -->
+                        <div class="next-steps-card">
+                            <div class="next-steps-title">Recommended Dispatch Protocols:</div>
+                            <ul class="next-steps-list" id="nextStepsList">
+                                <!-- Populated dynamically -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- API Keys Configuration Modal -->
+<div class="modal-overlay" id="apiKeyModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="modal-title">⚙️ Configure Cloud AI Engine Keys</div>
+            <button type="button" class="modal-close" id="btnCloseApiKeyModal" onclick="closeApiKeyModal()">&times;</button>
+        </div>
+        <p style="font-size:13px;color:var(--sub);line-height:1.5;margin-bottom:18px">
+            CyberSec operates with zero cloud lock-in. The built-in autonomous engine works completely offline. Optionally add a Google Gemini or OpenAI API key for advanced neural phrasing.
+        </p>
+        <form action="/admin/email-writer/config-keys" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="form-group">
+                <label class="form-label" for="geminiApiKey">Google Gemini API Key (Gemini 1.5 Flash)</label>
+                <input type="password" id="geminiApiKey" name="geminiApiKey" class="form-input" placeholder="AIzaSy..." value="">
+                <div class="meta-helper"><span>Free tier available at aistudio.google.com</span></div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="openaiApiKey">OpenAI API Key (Optional)</label>
+                <input type="password" id="openaiApiKey" name="openaiApiKey" class="form-input" placeholder="sk-proj-..." value="">
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+                <button type="button" class="btn-action btn-secondary" id="btnCancelApiKeyModal" onclick="closeApiKeyModal()">Cancel</button>
+                <button type="submit" class="btn-action" id="btnSaveApiKeyModal">Save API Keys</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+    const CSRF_TOKEN = "<%= csrfToken %>";
+    let currentPurpose = 'general';
+    let currentTone = 'professional';
+    let currentLength = 'balanced';
+    let currentSubjectIndex = 0;
+    let lastGeneratedData = null;
+
+    // Character counter
+    const inpPrompt = document.getElementById('inpPrompt');
+    const charCount = document.getElementById('charCount');
+    if (inpPrompt && charCount) {
+        inpPrompt.addEventListener('input', () => {
+            charCount.textContent = `${inpPrompt.value.length} characters`;
+        });
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.className = `toast show ${type}`;
+        setTimeout(() => {
+            toast.className = 'toast';
+        }, 3200);
+    }
+
+    function selectPurpose(purposeId) {
+        currentPurpose = purposeId;
+        document.querySelectorAll('.purpose-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.purpose === purposeId);
+        });
+
+        // Helpful pre-fills if prompt is currently empty
+        if (inpPrompt && !inpPrompt.value.trim()) {
+            const samplePrompts = {
+                incident_alert: "Notify internal leadership that unauthorized credential use was detected and isolated on server node-04. Password rotation complete. No data exfiltration identified.",
+                security_advisory: "Advise clients to apply the latest security patch for our enterprise portal before Friday to prevent potential session token vulnerabilities.",
+                meeting_request: "Request a 30-minute sync with the security architecture team to finalize zero-trust rollout milestones for Q4.",
+                follow_up: "Follow up on our cybersecurity audit proposal sent last Monday to check if the executive board has any questions.",
+                sales_outreach: "Introduce CyberSec 24/7 managed SOC services to enterprise target, offering a complimentary threat radar evaluation.",
+                executive_briefing: "Summarize this quarter's cyber defense telemetry: 99.98% uptime, 0 successful breaches, 412 automated phishing containments.",
+                phishing_training: "Share key lessons from this morning's simulated phishing drill. Highlight how to spot lookalike domains and urge reporting.",
+                project_update: "Update stakeholders that the Gmail threat extension v1.2 has been deployed to staging with 100% test pass rate."
+            };
+            if (samplePrompts[purposeId]) {
+                inpPrompt.value = samplePrompts[purposeId];
+                if (charCount) charCount.textContent = `${inpPrompt.value.length} characters`;
+            }
+        }
+    }
+
+    function selectTone(toneId) {
+        currentTone = toneId;
+        document.querySelectorAll('.tone-chip').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tone === toneId);
+        });
+    }
+
+    function selectLength(lengthId) {
+        currentLength = lengthId;
+        document.querySelectorAll('.length-opt').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.length === lengthId);
+        });
+    }
+
+    function resetForm() {
+        const form = document.getElementById('writerForm');
+        if (form) form.reset();
+        if (charCount) charCount.textContent = '0 characters';
+        selectPurpose('general');
+        selectTone('professional');
+        selectLength('balanced');
+        document.getElementById('outputEmptyState').style.display = 'flex';
+        document.getElementById('outputContent').style.display = 'none';
+        document.getElementById('outputBadge').textContent = 'Awaiting Input';
+        lastGeneratedData = null;
+        showToast('Form cleared', 'success');
+    }
+
+    async function handleGenerateSubmit(e) {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+        const promptVal = inpPrompt ? inpPrompt.value.trim() : '';
+        if (!promptVal) {
+            showToast('Please enter what this email should communicate first', 'error');
+            if (inpPrompt) inpPrompt.focus();
+            return;
+        }
+
+        const btn = document.getElementById('btnGenerate');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>⏳ Composing with AI...</span>';
+        }
+
+        const payload = {
+            prompt: promptVal,
+            purpose: currentPurpose,
+            tone: currentTone,
+            audience: document.getElementById('selAudience')?.value || 'internal_team',
+            length: currentLength,
+            recipientName: document.getElementById('inpRecipient')?.value.trim() || '',
+            senderName: document.getElementById('inpSender')?.value.trim() || '',
+            callToAction: document.getElementById('inpCta')?.value.trim() || ''
+        };
+
+        try {
+            const res = await fetch('/admin/email-writer/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': CSRF_TOKEN
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to generate email');
+            }
+
+            renderGeneratedEmail(data.email);
+            showToast('Email generated successfully!', 'success');
+        } catch (err) {
+            console.error('Generation error:', err);
+            showToast(err.message || 'Error generating email', 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>✨ Generate Email Now</span>';
+            }
+        }
+    }
+
+    function triggerGenerate() {
+        handleGenerateSubmit();
+    }
+
+    function renderGeneratedEmail(email) {
+        lastGeneratedData = email;
+        document.getElementById('outputEmptyState').style.display = 'none';
+        document.getElementById('outputContent').style.display = 'block';
+        document.getElementById('outputBadge').textContent = 'Draft Ready';
+
+        // Subject Lines
+        const cardsContainer = document.getElementById('subjectCards');
+        cardsContainer.innerHTML = '';
+        currentSubjectIndex = 0;
+
+        const subjectLabels = ['Primary Recommendation', 'Action-Oriented', 'Concise & Direct', 'Executive Impact'];
+
+        (email.subjectLines || []).forEach((subj, idx) => {
+            const card = document.createElement('div');
+            card.className = `subject-card ${idx === 0 ? 'active' : ''}`;
+            card.innerHTML = `
+                <span class="subj-text">${escapeHtml(subj)}</span>
+                <span class="subj-badge">${subjectLabels[idx] || `Option ${idx+1}`}</span>
+            `;
+            card.addEventListener('click', () => selectSubjectIndex(idx));
+            cardsContainer.appendChild(card);
+        });
+
+        // Email Editor
+        const editor = document.getElementById('emailEditor');
+        editor.value = email.bodyText || '';
+
+        const preview = document.getElementById('emailPreviewBox');
+        preview.innerHTML = email.bodyHtml || (email.bodyText || '').replace(/\n/g, '<br>');
+
+        // Telemetry
+        document.getElementById('valWordCount').textContent = email.metadata?.wordCount || editor.value.split(/\s+/).filter(Boolean).length;
+        document.getElementById('valReadTime').textContent = email.metadata?.estimatedReadTime || '1 min';
+        document.getElementById('valEngine').textContent = email.engine || 'Autonomous v4.0';
+        document.getElementById('valTone').textContent = (email.metadata?.tone || currentTone).toUpperCase();
+
+        // Next steps
+        const stepsList = document.getElementById('nextStepsList');
+        stepsList.innerHTML = '';
+        (email.suggestedNextSteps || ['Verify recipient list', 'Review tone before sending']).forEach(step => {
+            const li = document.createElement('li');
+            li.textContent = step;
+            stepsList.appendChild(li);
+        });
+    }
+
+    function selectSubjectIndex(index) {
+        currentSubjectIndex = index;
+        document.querySelectorAll('.subject-card').forEach((c, idx) => {
+            c.classList.toggle('active', idx === index);
+        });
+        showToast('Selected Subject Option ' + (index + 1));
+    }
+
+    function switchCanvasTab(tab) {
+        const isText = tab === 'text';
+        document.getElementById('tabText').classList.toggle('active', isText);
+        document.getElementById('tabPreview').classList.toggle('active', !isText);
+        const editor = document.getElementById('emailEditor');
+        const preview = document.getElementById('emailPreviewBox');
+        if (!isText) {
+            preview.innerHTML = editor.value.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+        }
+        editor.style.display = isText ? 'block' : 'none';
+        preview.style.display = isText ? 'none' : 'block';
+    }
+
+    const emailEditorEl = document.getElementById('emailEditor');
+    if (emailEditorEl) {
+        emailEditorEl.addEventListener('input', (e) => {
+            const count = e.target.value.split(/\s+/).filter(Boolean).length;
+            document.getElementById('valWordCount').textContent = count;
+            document.getElementById('valReadTime').textContent = Math.max(1, Math.ceil(count / 180)) + ' min read';
+        });
+    }
+
+    function getActiveSubject() {
+        if (!lastGeneratedData || !lastGeneratedData.subjectLines) return '';
+        return lastGeneratedData.subjectLines[currentSubjectIndex] || lastGeneratedData.subjectLines[0] || '';
+    }
+
+    function copyTextToClipboard(text, successMsg) {
+        if (!text) {
+            showToast('No content available to copy', 'error');
+            return;
+        }
+
+        if (navigator.clipboard && window.isSecureContext !== false) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(successMsg, 'success');
+            }).catch(() => {
+                fallbackCopy(text, successMsg);
+            });
+        } else {
+            fallbackCopy(text, successMsg);
+        }
+    }
+
+    function fallbackCopy(text, successMsg) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '-9999px';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            const ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            if (ok) {
+                showToast(successMsg, 'success');
+            } else {
+                showToast('Unable to copy automatically. Please copy text manually.', 'error');
+            }
+        } catch (err) {
+            showToast('Copy failed. Please copy text manually.', 'error');
+        }
+    }
+
+    function copyActiveSubject() {
+        const subj = getActiveSubject();
+        if (!subj) {
+            showToast('No subject line available to copy', 'error');
+            return;
+        }
+        copyTextToClipboard(subj, 'Subject line copied to clipboard!');
+    }
+
+    function copyFullEmail() {
+        const subj = getActiveSubject();
+        const editor = document.getElementById('emailEditor');
+        const body = editor ? editor.value : '';
+        if (!body) {
+            showToast('No generated email body to copy', 'error');
+            return;
+        }
+        const fullMessage = subj ? `Subject: ${subj}\n\n${body}` : body;
+        copyTextToClipboard(fullMessage, 'Full email (Subject + Body) copied!');
+    }
+
+    function openInGmail() {
+        const subj = encodeURIComponent(getActiveSubject());
+        const editor = document.getElementById('emailEditor');
+        const body = encodeURIComponent(editor ? editor.value : '');
+        const url = `https://mail.google.com/mail/?view=cm&fs=1&su=${subj}&body=${body}`;
+        const win = window.open(url, '_blank');
+        if (!win || win.closed || typeof win.closed === 'undefined') {
+            showToast('Popup was blocked by your browser. Please allow popups.', 'error');
+        } else {
+            showToast('Opening draft in Gmail...', 'success');
+        }
+    }
+
+    function refineTone(newTone) {
+        selectTone(newTone);
+        triggerGenerate();
+    }
+
+    function refineLength(newLength) {
+        selectLength(newLength);
+        triggerGenerate();
+    }
+
+    function openApiKeyModal() {
+        const modal = document.getElementById('apiKeyModal');
+        if (modal) modal.classList.add('active');
+    }
+
+    function closeApiKeyModal() {
+        const modal = document.getElementById('apiKeyModal');
+        if (modal) modal.classList.remove('active');
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // Attach comprehensive DOM Event Listeners for 100% button reliability
+    function initAllButtonListeners() {
+        const form = document.getElementById('writerForm');
+        if (form) {
+            form.addEventListener('submit', handleGenerateSubmit);
+        }
+
+        const btnReset = document.getElementById('btnResetForm');
+        if (btnReset) {
+            btnReset.addEventListener('click', (e) => {
+                e.preventDefault();
+                resetForm();
+            });
+        }
+
+        const btnOpenModal = document.getElementById('btnOpenApiKeyModal');
+        if (btnOpenModal) {
+            btnOpenModal.addEventListener('click', (e) => {
+                e.preventDefault();
+                openApiKeyModal();
+            });
+        }
+
+        const btnCloseModal = document.getElementById('btnCloseApiKeyModal');
+        if (btnCloseModal) {
+            btnCloseModal.addEventListener('click', (e) => {
+                e.preventDefault();
+                closeApiKeyModal();
+            });
+        }
+
+        const btnCancelModal = document.getElementById('btnCancelApiKeyModal');
+        if (btnCancelModal) {
+            btnCancelModal.addEventListener('click', (e) => {
+                e.preventDefault();
+                closeApiKeyModal();
+            });
+        }
+
+        const modalOverlay = document.getElementById('apiKeyModal');
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeApiKeyModal();
+            });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalOverlay && modalOverlay.classList.contains('active')) {
+                closeApiKeyModal();
+            }
+        });
+
+        const tabText = document.getElementById('tabText');
+        if (tabText) {
+            tabText.addEventListener('click', () => switchCanvasTab('text'));
+        }
+
+        const tabPreview = document.getElementById('tabPreview');
+        if (tabPreview) {
+            tabPreview.addEventListener('click', () => switchCanvasTab('preview'));
+        }
+
+        const btnCopySubj = document.getElementById('btnCopyActiveSubject');
+        if (btnCopySubj) {
+            btnCopySubj.addEventListener('click', copyActiveSubject);
+        }
+
+        const btnCopyEmail = document.getElementById('btnCopyFullEmail');
+        if (btnCopyEmail) {
+            btnCopyEmail.addEventListener('click', copyFullEmail);
+        }
+
+        const btnGmail = document.getElementById('btnOpenGmail');
+        if (btnGmail) {
+            btnGmail.addEventListener('click', openInGmail);
+        }
+
+        // Purpose Presets
+        document.querySelectorAll('.purpose-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const p = btn.dataset.purpose;
+                if (p) selectPurpose(p);
+            });
+        });
+
+        // Tone Chips
+        document.querySelectorAll('.tone-chip').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const t = btn.dataset.tone;
+                if (t) selectTone(t);
+            });
+        });
+
+        // Length Options
+        document.querySelectorAll('.length-opt').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const l = btn.dataset.length;
+                if (l) selectLength(l);
+            });
+        });
+
+        // Refine Chips
+        document.querySelectorAll('.refine-chip').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tone = btn.dataset.refineTone;
+                const length = btn.dataset.refineLength;
+                if (tone) refineTone(tone);
+                if (length) refineLength(length);
+            });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAllButtonListeners);
+    } else {
+        initAllButtonListeners();
+    }
+</script>
+
+</body>
+</html>
