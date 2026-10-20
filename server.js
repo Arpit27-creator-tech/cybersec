@@ -24,6 +24,9 @@ const emailWriterRouter = require('./routes/emailWriterApi');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust reverse proxies (Render, Cloudflare, Vercel) so cookies and req.secure work over HTTPS
+app.set('trust proxy', 1);
+
 // View engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -72,12 +75,12 @@ app.use(
     store: sessionStore,
     secret: sessionSecret,
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       httpOnly: true,
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production'
+      secure: 'auto'
     }
   })
 );

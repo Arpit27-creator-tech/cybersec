@@ -26,7 +26,13 @@ router.post('/login', validateLogin, async (req, res) => {
     req.session.username = user.username;
     req.session.role = user.role;
 
-    res.redirect('/admin');
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('Session save error:', saveErr);
+        return res.render('login', { errors: ['Session error. Please try again.'], values: { username } });
+      }
+      res.redirect('/admin');
+    });
   } catch (err) {
     console.error('Login error:', err);
     res.render('login', { errors: ['An error occurred. Please try again.'], values: {} });
@@ -66,7 +72,13 @@ router.post('/register', validateRegister, async (req, res) => {
     req.session.username = user.username;
     req.session.role = user.role;
 
-    res.redirect('/admin');
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        console.error('Session save error:', saveErr);
+        return res.render('register', { errors: ['Session error. Please try again.'], values: {} });
+      }
+      res.redirect('/admin');
+    });
   } catch (err) {
     console.error('Register error:', err);
     res.render('register', { errors: ['An error occurred. Please try again.'], values: {} });
