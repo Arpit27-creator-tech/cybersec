@@ -1,0 +1,11 @@
+.git
+node_modules
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.DS_Store
+.env*
+!.env.example
+archive/

@@ -2,18 +2,39 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure data directory exists
-const dataDir = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+// Ensure data directory exists with serverless (/tmp) fallback
+let dataDir;
+let db;
+
+try {
+  if (process.env.VERCEL) {
+    dataDir = path.join('/tmp', 'data');
+  } else {
+    dataDir = path.join(__dirname, '..', 'data');
+  }
+
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+
+  const dbPath = path.join(dataDir, 'app.db');
+  db = new DatabaseSync(dbPath);
+} catch (err) {
+  console.warn('⚠️ Primary database path unavailable, falling back to /tmp or in-memory:', err.message);
+  try {
+    const tmpDir = path.join('/tmp', 'data');
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+    db = new DatabaseSync(path.join(tmpDir, 'app.db'));
+  } catch (_) {
+    db = new DatabaseSync(':memory:');
+  }
 }
 
-const dbPath = path.join(dataDir, 'app.db');
-const db = new DatabaseSync(dbPath);
-
 // Enable WAL mode & Foreign Keys
-db.exec('PRAGMA journal_mode = WAL;');
-db.exec('PRAGMA foreign_keys = ON;');
+try {
+  db.exec('PRAGMA journal_mode = WAL;');
+  db.exec('PRAGMA foreign_keys = ON;');
+} catch (_) {}
 
 // ── Schema ──
 db.exec(`
@@ -142,4 +163,35 @@ try {
   db.exec("ALTER TABLE email_scans ADD COLUMN classification_details TEXT;");
 } catch (_) {}
 
+// Auto-seed default site stats if empty
+try {
+  const statCheck = db.prepare('SELECT COUNT(*) as count FROM site_stats').get();
+  if (!statCheck || statCheck.count === 0) {
+    const insertStat = db.prepare('INSERT OR IGNORE INTO site_stats (stat_key, stat_value, stat_label, display_order) VALUES (?, ?, ?, ?)');
+    insertStat.run('clients', '300+', 'Clients', 1);
+    insertStat.run('satisfaction', '99%', 'Satisfaction', 2);
+    insertStat.run('revenue', '$5M+', 'Revenue', 3);
+  }
+} catch (e) {
+  console.warn('⚠️ Auto-seeding site_stats:', e.message);
+}
+
+// Auto-seed default admin if empty
+try {
+  const existingAdmin = db.prepare('SELECT id FROM users WHERE username = ?').get('admin');
+  if (!existingAdmin) {
+    const bcrypt = require('bcryptjs');
+    const hash = bcrypt.hashSync('changeme123', 10);
+    db.prepare('INSERT OR IGNORE INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)').run(
+      'admin',
+      'admin@cybersec.local',
+      hash,
+      'admin'
+    );
+  }
+} catch (e) {
+  console.warn('⚠️ Auto-seeding admin:', e.message);
+}
+
 module.exports = db;
+

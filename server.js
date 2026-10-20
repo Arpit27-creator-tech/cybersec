@@ -120,7 +120,9 @@ const { initBackgroundScanner } = require('./services/backgroundScanner');
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 CyberSec full-stack CRM running at http://localhost:${PORT}`);
-  initBackgroundScanner();
+  if (!process.env.VERCEL) {
+    initBackgroundScanner();
+  }
 });
 
 module.exports = app;
