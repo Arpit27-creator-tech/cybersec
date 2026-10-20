@@ -8,6 +8,7 @@
   ],
   "host_permissions": [
     "http://localhost:3000/*",
+    "https://cybersec-crm.onrender.com/*",
     "https://mail.google.com/*",
     "https://generativelanguage.googleapis.com/*"
   ],

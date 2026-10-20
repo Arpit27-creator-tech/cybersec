@@ -4,7 +4,8 @@
  * v1.1.0: Added direct Gemini 3.8 Flash API integration for in-Gmail AI Email Writer.
  */
 
-const API_BASE_URL = 'http://localhost:3000/api/extension';
+const API_BASE_URL = 'https://cybersec-crm.onrender.com/api/extension';
+const LOCAL_API_BASE_URL = 'http://localhost:3000/api/extension';
 const GEMINI_CANDIDATE_MODELS = [
   'gemini-flash-lite-latest',
   'gemini-3.5-flash-lite',
@@ -69,136 +70,145 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 /**
- * Handle email scan request via CyberSec local API
+ * Handle email scan request via CyberSec API (tries live cloud first, then localhost fallback)
  */
 async function handleEmailScan(emailData) {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
+  const endpoints = [`${API_BASE_URL}/scan`, `${LOCAL_API_BASE_URL}/scan`];
+  let lastErr = null;
 
-    const res = await fetch(`${API_BASE_URL}/scan`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(emailData),
-      signal: controller.signal
-    });
+  for (const endpoint of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    clearTimeout(timeoutId);
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(emailData),
+        signal: controller.signal
+      });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      let errMsg = `Server returned HTTP ${res.status}`;
-      try {
-        const parsed = JSON.parse(errText);
-        if (parsed.error) errMsg = parsed.error;
-      } catch (_) {}
-      return { success: false, error: errMsg };
-    }
+      clearTimeout(timeoutId);
 
-    const report = await res.json();
-
-    // Update extension action badge based on threat score
-    const score = report.threatScore || 0;
-    if (score >= 60 || report.isPhishing) {
-      await chrome.action.setBadgeText({ text: '!' });
-      await chrome.action.setBadgeBackgroundColor({ color: '#EF4444' });
-    } else if (score >= 35) {
-      await chrome.action.setBadgeText({ text: 'WARN' });
-      await chrome.action.setBadgeBackgroundColor({ color: '#F59E0B' });
-    } else {
-      await chrome.action.setBadgeText({ text: 'SAFE' });
-      await chrome.action.setBadgeBackgroundColor({ color: '#10B981' });
-    }
-
-    // Persist latest scan summary in storage
-    await chrome.storage.local.set({
-      lastScan: {
-        scanId: report.scanId,
-        subject: emailData.subject,
-        sender: emailData.sender,
-        threatScore: score,
-        threatLevel: report.threatLevel,
-        isPhishing: report.isPhishing,
-        scannedAt: Date.now()
+      if (!res.ok) {
+        const errText = await res.text();
+        let errMsg = `Server returned HTTP ${res.status}`;
+        try {
+          const parsed = JSON.parse(errText);
+          if (parsed.error) errMsg = parsed.error;
+        } catch (_) {}
+        return { success: false, error: errMsg };
       }
-    });
 
-    return report;
-  } catch (err) {
-    if (err.name === 'AbortError') {
-      return {
-        success: false,
-        error: 'Scan request timed out. Please check if CyberSec server is responding at http://localhost:3000.'
-      };
+      const report = await res.json();
+
+      // Update extension action badge based on threat score
+      const score = report.threatScore || 0;
+      if (score >= 60 || report.isPhishing) {
+        await chrome.action.setBadgeText({ text: '!' });
+        await chrome.action.setBadgeBackgroundColor({ color: '#EF4444' });
+      } else if (score >= 35) {
+        await chrome.action.setBadgeText({ text: 'WARN' });
+        await chrome.action.setBadgeBackgroundColor({ color: '#F59E0B' });
+      } else {
+        await chrome.action.setBadgeText({ text: 'SAFE' });
+        await chrome.action.setBadgeBackgroundColor({ color: '#10B981' });
+      }
+
+      // Persist latest scan summary in storage
+      await chrome.storage.local.set({
+        lastScan: {
+          scanId: report.scanId,
+          subject: emailData.subject,
+          sender: emailData.sender,
+          threatScore: score,
+          threatLevel: report.threatLevel,
+          isPhishing: report.isPhishing,
+          scannedAt: Date.now()
+        }
+      });
+
+      return report;
+    } catch (err) {
+      lastErr = err;
     }
-    return {
-      success: false,
-      error: 'Cannot connect to CyberSec backend at http://localhost:3000. Please ensure the local server is running.'
-    };
   }
+
+  return {
+    success: false,
+    error: lastErr?.name === 'AbortError'
+      ? 'Scan request timed out connecting to CyberSec backend.'
+      : 'Cannot connect to CyberSec backend (tried Render cloud & localhost). Please verify your connection.'
+  };
 }
 
 /**
- * Check if the local CyberSec server is alive
+ * Check if the CyberSec server is alive (tries live cloud and localhost)
  */
 async function checkServerStatus() {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+  const endpoints = [
+    { url: `${API_BASE_URL}/status`, name: 'Render Cloud' },
+    { url: `${LOCAL_API_BASE_URL}/status`, name: 'Localhost' }
+  ];
 
-    const res = await fetch(`${API_BASE_URL}/status`, {
-      method: 'GET',
-      signal: controller.signal
-    });
+  for (const ep of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
 
-    clearTimeout(timeoutId);
+      const res = await fetch(ep.url, {
+        method: 'GET',
+        signal: controller.signal
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      return { online: true, ...data };
-    }
-    return { online: false, status: res.status };
-  } catch (err) {
-    return { online: false, error: err.message };
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        return { online: true, server: ep.name, ...data };
+      }
+    } catch (_) {}
   }
+  return { online: false, error: 'Cannot connect to CyberSec backend' };
 }
 
 /**
- * Handle AI Email Writer generation request (via local CyberSec backend)
+ * Handle AI Email Writer generation request (via CyberSec backend)
  */
 async function handleGenerateEmail(writerData) {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+  const endpoints = [
+    'https://cybersec-crm.onrender.com/api/writer/generate',
+    'http://localhost:3000/api/writer/generate'
+  ];
 
-    const res = await fetch('http://localhost:3000/api/writer/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(writerData),
-      signal: controller.signal
-    });
-    clearTimeout(timeoutId);
+  for (const endpoint of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(errBody.error || `Server responded with ${res.status}`);
-    }
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(writerData),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
 
-    const data = await res.json();
-    return data;
-  } catch (err) {
-    console.error('Error generating email with AI:', err);
-    return {
-      success: false,
-      error: err.name === 'AbortError'
-        ? 'Generation timed out. Please check backend server.'
-        : `Cannot connect to CyberSec Writer: ${err.message}`
-    };
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+    } catch (_) {}
   }
+
+  return {
+    success: false,
+    error: 'Cannot connect to CyberSec Writer (tried Render cloud & localhost).'
+  };
 }
 
 /**

@@ -50,14 +50,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const openWriterBtn = document.getElementById('openWriterBtn');
   if (openWriterBtn) {
     openWriterBtn.addEventListener('click', async () => {
-      await chrome.tabs.create({ url: 'http://localhost:3000/admin/email-writer' });
+      await chrome.tabs.create({ url: 'https://cybersec-crm.onrender.com/admin/email-writer' });
     });
   }
 
   // Open CyberSec Web Dashboard
   if (openDashboardBtn) {
     openDashboardBtn.addEventListener('click', async () => {
-      await chrome.tabs.create({ url: 'http://localhost:3000/admin/email-scanner' });
+      await chrome.tabs.create({ url: 'https://cybersec-crm.onrender.com/admin/email-scanner' });
     });
   }
 
