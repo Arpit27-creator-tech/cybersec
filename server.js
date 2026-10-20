@@ -31,7 +31,29 @@ app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Security & Helmet (configured to allow CDN videos and fonts)
+// CORS middleware to accept requests from Vercel frontend and local dev
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const isAllowed =
+    !origin ||
+    origin.includes('localhost') ||
+    origin.endsWith('.vercel.app') ||
+    origin === process.env.FRONTEND_URL;
+
+  if (isAllowed && origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-CSRF-Token,X-Requested-With');
+  }
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+// Security & Helmet (configured to allow CDN videos, Vercel frontend, and fonts)
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -44,7 +66,7 @@ app.use(
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https:"],
         mediaSrc: ["'self'", "https://d8j0ntlcm91z4.cloudfront.net"],
-        connectSrc: ["'self'"],
+        connectSrc: ["'self'", "https://*.vercel.app", "https://cybersec-crm.onrender.com", "http://localhost:*"],
       },
     },
   })
