@@ -4,9 +4,15 @@
  */
 
 (() => {
-  // Prevent duplicate injection
+  // Prevent duplicate injection in the same isolated world
   if (window.__CYBERSEC_RADAR_INJECTED__) return;
   window.__CYBERSEC_RADAR_INJECTED__ = true;
+
+  // Prevent duplicate injection across multiple extension instances (e.g. if loaded twice in Chrome)
+  if (document.documentElement.dataset.cybersecRadarActive === 'true') {
+    return;
+  }
+  document.documentElement.dataset.cybersecRadarActive = 'true';
 
   console.log('🛡️ CyberSec Email Threat Radar initialized on Gmail.');
 
@@ -41,22 +47,18 @@
   }
 
   /**
-   * Safe DOM helper: Batch updates using requestAnimationFrame
+   * Safe DOM helper: Synchronous updates to prevent race conditions
    */
   function safeAppend(parent, child) {
-    window.requestAnimationFrame(() => {
-      if (parent && !parent.contains(child)) {
-        parent.appendChild(child);
-      }
-    });
+    if (parent && child && !parent.contains(child)) {
+      parent.appendChild(child);
+    }
   }
 
   function safeInsertBefore(parent, child, reference) {
-    window.requestAnimationFrame(() => {
-      if (parent && !parent.contains(child)) {
-        parent.insertBefore(child, reference);
-      }
-    });
+    if (parent && child && !parent.contains(child)) {
+      parent.insertBefore(child, reference);
+    }
   }
 
   /**
@@ -387,78 +389,73 @@
    * Inject scan buttons into active Gmail messages
    */
   function injectRadarButtons() {
-    // Gmail messages container classes
-    const messages = document.querySelectorAll('.adn.ads, .gs, div[data-message-id]');
+    // Locate message cards in Gmail thread views.
+    // '.adn' is Gmail's canonical top-level message container in thread views.
+    const messages = document.querySelectorAll('.adn');
     if (!messages || messages.length === 0) return;
 
-    messages.forEach((messageEl) => {
-      // Check if button is already injected
-      if (messageEl.querySelector('.cybersec-scan-trigger')) return;
+    // Track header action toolbars we've already injected in this pass
+    const processedHeaders = new Set();
 
-      // Locate header actions container in this message
+    messages.forEach((messageEl) => {
+      // Find the message header action toolbar (reply, more options, etc.)
       const headerActions = messageEl.querySelector('.gH .gE.iv.gt') ||
                             messageEl.querySelector('.gH') ||
                             messageEl.querySelector('.ha');
+      if (!headerActions) return;
 
-      if (headerActions) {
-        const btnContainer = document.createElement('div');
-        btnContainer.className = 'cybersec-scan-trigger-wrapper';
+      // Prevent duplicate processing in the same pass
+      if (processedHeaders.has(headerActions)) return;
+      processedHeaders.add(headerActions);
 
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'cybersec-scan-trigger';
-        btn.innerHTML = `
-          ${getBrandSvg('cybersec-trigger-svg')}
-          <span>Scan with CyberSec</span>
-        `;
-
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          performScan(messageEl, btn);
-        });
-
-        btnContainer.appendChild(btn);
-        safeAppend(headerActions, btnContainer);
-
-        // Auto-scan if enabled in extension settings
-        const msgId = messageEl.getAttribute('data-message-id') || messageEl.innerText.substring(0, 50);
-        if (autoScanEnabled && !scannedMessages.has(msgId)) {
-          scannedMessages.add(msgId);
-          setTimeout(() => performScan(messageEl, btn), 600);
+      // Clean up any duplicate scan buttons if more than one exists in this header
+      const existingWrappers = headerActions.querySelectorAll('.cybersec-scan-trigger-wrapper');
+      if (existingWrappers.length > 1) {
+        for (let i = 1; i < existingWrappers.length; i++) {
+          existingWrappers[i].remove();
         }
+      }
+
+      // If already has a scan trigger or marked as injected, skip
+      if (headerActions.querySelector('.cybersec-scan-trigger') || headerActions.dataset.cybersecInjected === 'true') {
+        return;
+      }
+
+      // Synchronously mark as injected immediately to prevent race conditions
+      headerActions.dataset.cybersecInjected = 'true';
+
+      const btnContainer = document.createElement('div');
+      btnContainer.className = 'cybersec-scan-trigger-wrapper';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cybersec-scan-trigger';
+      btn.innerHTML = `
+        ${getBrandSvg('cybersec-trigger-svg')}
+        <span>Scan with CyberSec</span>
+      `;
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        performScan(messageEl, btn);
+      });
+
+      btnContainer.appendChild(btn);
+      headerActions.appendChild(btnContainer);
+
+      // Auto-scan if enabled in extension settings
+      const msgId = messageEl.getAttribute('data-message-id') || messageEl.innerText.substring(0, 50);
+      if (autoScanEnabled && !scannedMessages.has(msgId)) {
+        scannedMessages.add(msgId);
+        setTimeout(() => performScan(messageEl, btn), 600);
       }
     });
 
-    // Also inject floating action pill if on a thread view and none exists
-    const mainView = document.querySelector('[role="main"]');
-    if (mainView && !document.querySelector('.cybersec-floating-radar')) {
-      const activeMessage = document.querySelector('.adn.ads:not([style*="display: none"])') ||
-                            document.querySelector('.gs') ||
-                            document.querySelector('.a3s.aiL')?.closest('.adn');
-
-      if (activeMessage) {
-        const floatingPill = document.createElement('div');
-        floatingPill.className = 'cybersec-floating-radar';
-        floatingPill.innerHTML = `
-          <div class="cybersec-floating-badge" title="Click to inspect this email with CyberSec Threat Radar">
-            <span class="cybersec-radar-ring"></span>
-            ${getBrandSvg('cybersec-trigger-svg')}
-            <span class="cybersec-floating-label">CyberSec Radar</span>
-          </div>
-        `;
-
-        floatingPill.addEventListener('click', () => {
-          const target = document.querySelector('.adn.ads:not([style*="display: none"])') ||
-                         document.querySelector('.gs') ||
-                         document.querySelector('.a3s.aiL')?.closest('.adn') ||
-                         mainView;
-          const inlineBtn = target?.querySelector('.cybersec-scan-trigger');
-          performScan(target, inlineBtn);
-        });
-
-        safeAppend(document.body, floatingPill);
-      }
+    // Clean up any stray or unstyled floating radar pills
+    const floatingPills = document.querySelectorAll('.cybersec-floating-radar');
+    if (floatingPills.length > 0) {
+      floatingPills.forEach((p) => p.remove());
     }
   }
 
@@ -466,18 +463,63 @@
    * Inject AI Email Writer button into active Gmail Compose windows (both popups and inline replies)
    */
   function injectComposeButtons() {
-    // Look for all editable message bodies in Gmail (covers new compose, popups, full-screen, and inline thread replies)
+    // Look for all editable message bodies in Gmail
     const bodyBoxes = document.querySelectorAll(
       'div[aria-label="Message Body"], div[role="textbox"][g_editable="true"], div.Am.Al.editable'
     );
+    if (!bodyBoxes || bodyBoxes.length === 0) return;
+
+    const processedToolbars = new Set();
 
     bodyBoxes.forEach((bodyBox) => {
-      // Find the parent compose container
-      const container = bodyBox.closest('.AD, [role="dialog"], .M9, .aoI, .ip, .gA, .adn, .nH') || bodyBox.parentElement;
+      // Find the compose window or dialog container
+      const container = bodyBox.closest('.AD, [role="dialog"], .M9, .aoI, .ip, .gA') ||
+                        bodyBox.closest('form') ||
+                        bodyBox.parentElement;
       if (!container) return;
 
-      // Avoid injecting multiple buttons into the same compose box
-      if (container.querySelector('.cybersec-writer-trigger')) return;
+      // Find the action toolbar near the Send button
+      const sendCell = container.querySelector('.btC .gU.Up, td.gU.Up, .gU.Up');
+      const sendBtn = container.querySelector('div[role="button"][data-tooltip*="Send"], div.T-I-atl, .aoO');
+      const toolbarRow = container.querySelector('tr.btC, .btC, [role="toolbar"], .aDh');
+
+      let targetSlot = null;
+      let shouldWrapInTd = false;
+
+      if (sendCell) {
+        targetSlot = sendCell;
+      } else if (sendBtn && sendBtn.parentElement) {
+        targetSlot = sendBtn.parentElement;
+      } else if (toolbarRow) {
+        if (toolbarRow.tagName === 'TR') {
+          targetSlot = toolbarRow;
+          shouldWrapInTd = true;
+        } else {
+          targetSlot = toolbarRow;
+        }
+      }
+
+      if (!targetSlot) return;
+
+      // Deduplicate toolbar slot in the same pass
+      if (processedToolbars.has(targetSlot)) return;
+      processedToolbars.add(targetSlot);
+
+      // Clean up any duplicate writer buttons if more than one exists in this toolbar
+      const existingTriggers = targetSlot.querySelectorAll('.cybersec-writer-trigger');
+      if (existingTriggers.length > 1) {
+        for (let i = 1; i < existingTriggers.length; i++) {
+          existingTriggers[i].remove();
+        }
+      }
+
+      // If already injected or marked, skip
+      if (targetSlot.querySelector('.cybersec-writer-trigger') || targetSlot.dataset.cybersecWriterInjected === 'true') {
+        return;
+      }
+
+      targetSlot.dataset.cybersecWriterInjected = 'true';
+      container.dataset.cybersecWriterInjected = 'true';
 
       // Create writer button
       const writerBtn = document.createElement('button');
@@ -495,28 +537,14 @@
         openWriterModal(container);
       });
 
-      // Find the best toolbar location
-      const sendCell = container.querySelector('.btC .gU.Up, td.gU.Up, .gU.Up');
-      const sendBtn = container.querySelector('div[role="button"][data-tooltip*="Send"], div.T-I-atl, .aoO');
-      const toolbarRow = container.querySelector('tr.btC, .btC, [role="toolbar"], .aDh');
-
-      if (sendCell) {
-        sendCell.appendChild(writerBtn);
-      } else if (sendBtn && sendBtn.parentElement) {
-        sendBtn.parentElement.appendChild(writerBtn);
-      } else if (toolbarRow) {
-        if (toolbarRow.tagName === 'TR') {
-          const td = document.createElement('td');
-          td.className = 'gU';
-          td.style.verticalAlign = 'middle';
-          td.appendChild(writerBtn);
-          toolbarRow.appendChild(td);
-        } else {
-          toolbarRow.appendChild(writerBtn);
-        }
+      if (shouldWrapInTd) {
+        const td = document.createElement('td');
+        td.className = 'gU cybersec-writer-cell';
+        td.style.verticalAlign = 'middle';
+        td.appendChild(writerBtn);
+        targetSlot.appendChild(td);
       } else {
-        // Fallback: append inside bottom of container
-        bodyBox.parentElement.appendChild(writerBtn);
+        targetSlot.appendChild(writerBtn);
       }
     });
   }
