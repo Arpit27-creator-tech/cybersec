@@ -354,9 +354,9 @@
     };
     window.copyExtensionFolderPath = function(btn) {
         var targetBtn = btn || document.getElementById('btnCopyFolderPath') || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
-        var folderPath = '/Users/arpi85222707gmail.com/Documents/cybersec/extension';
-        
         var disp = document.getElementById('extensionPathDisplay');
+        var folderPath = (disp ? disp.textContent.trim() : '') || window.EXTENSION_FOLDER_PATH || '';
+        
         if (disp) {
             try {
                 var range = document.createRange();
@@ -367,11 +367,15 @@
             } catch (_) {}
         }
 
+        if (!folderPath) {
+            folderPath = window.location.origin + '/api/extension/download';
+        }
+
         copyTextToClipboard(folderPath, function(ok) {
             if (targetBtn) {
                 var orig = targetBtn.getAttribute('data-orig-html') || targetBtn.innerHTML;
                 targetBtn.setAttribute('data-orig-html', orig);
-                targetBtn.innerHTML = '<span style="color:#0B0F19;font-weight:700">✓ Path Copied to Clipboard!</span>';
+                targetBtn.innerHTML = '<span style="color:#00E5FF;font-weight:700">✓ Path Copied to Clipboard!</span>';
                 setTimeout(function() {
                     targetBtn.innerHTML = orig;
                 }, 2500);
@@ -383,7 +387,7 @@
         var orig = targetBtn ? (targetBtn.getAttribute('data-orig-html') || targetBtn.innerHTML) : null;
         if (targetBtn) {
             targetBtn.setAttribute('data-orig-html', orig);
-            targetBtn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Opening Finder...';
+            targetBtn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Opening...';
             targetBtn.disabled = true;
         }
         fetch('/api/extension/reveal-finder', {
@@ -394,14 +398,14 @@
         .then(function(data) {
             if (data.success) {
                 if (targetBtn) {
-                    targetBtn.innerHTML = '<span style="color:#00E5FF">✓ Opened in Finder!</span>';
+                    targetBtn.innerHTML = '<span style="color:#00E5FF">✓ Opened in Folder!</span>';
                     setTimeout(function() {
                         targetBtn.innerHTML = orig;
                         targetBtn.disabled = false;
                     }, 2500);
                 }
             } else {
-                alert('Could not open Finder: ' + (data.error || 'Unknown error'));
+                alert('Could not open folder automatically: ' + (data.error || 'System file manager not reachable') + '\n\nPlease copy the folder path or click Download Extension (.zip).');
                 if (targetBtn) {
                     targetBtn.innerHTML = orig;
                     targetBtn.disabled = false;
@@ -409,7 +413,7 @@
             }
         })
         .catch(function(err) {
-            alert('Network error revealing folder');
+            alert('Host server file manager not reachable. If opening on a separate PC, please click Download Extension (.zip).');
             if (targetBtn) {
                 targetBtn.innerHTML = orig;
                 targetBtn.disabled = false;
@@ -777,7 +781,7 @@
                 <div style="display:flex;align-items:center;gap:10px">
                     <div id="extServerDot" style="width:8px;height:8px;border-radius:50%;background:#00E5FF;box-shadow:0 0 10px #00E5FF"></div>
                     <span id="extServerStatusText" style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:#fff">
-                        Telemetry Stream Endpoint: <strong style="color:#00E5FF">http://localhost:3000/api/extension/scan</strong>
+                        Telemetry Stream Endpoint: <strong style="color:#00E5FF" id="extStreamUrl"><%= typeof streamEndpoint !== 'undefined' ? streamEndpoint : 'http://localhost:3000/api/extension/scan' %></strong>
                     </span>
                 </div>
                 <span id="extServerBadge" style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:#00E5FF;background:rgba(0,229,255,.15);padding:3px 8px;border:1px solid rgba(0,229,255,.3)">● SERVER ONLINE</span>
@@ -803,20 +807,40 @@
                 <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);padding:16px;display:flex;gap:14px">
                     <div style="width:28px;height:28px;background:rgba(0,229,255,.15);color:#00E5FF;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
                     <div style="flex:1">
-                        <div style="font-weight:600;font-size:14px;color:#fff;margin-bottom:4px">Click "Load unpacked" & Select Extension Folder</div>
-                        <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:8px">
-                            Click the <strong style="color:#fff">"Load unpacked"</strong> button in Chrome Extensions, and select the folder below:
+                        <div style="font-weight:600;font-size:14px;color:#fff;margin-bottom:4px">Get Extension & Click "Load unpacked"</div>
+                        <div style="font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:var(--lab);margin-bottom:12px;line-height:1.5">
+                            In Chrome Extensions, click the <strong style="color:#fff">"Load unpacked"</strong> button and select the extension folder using either method below:
                         </div>
-                        <div id="extensionPathDisplay" style="background:#000;border:1px solid var(--border);padding:10px 14px;font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:#00E5FF;word-break:break-all;margin-bottom:10px;user-select:all;-webkit-user-select:all;cursor:text" title="Click to select folder path">
-                            /Users/arpi85222707gmail.com/Documents/cybersec/extension
+
+                        <!-- Method A: Download for any PC / Remote access -->
+                        <div style="background:rgba(0,229,255,.03);border:1px dashed rgba(0,229,255,.3);padding:12px 14px;margin-bottom:12px">
+                            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+                                <span style="font-size:13px;font-weight:700;color:#fff">📦 Option A: Download Extension to This PC (Any Computer)</span>
+                                <span style="font-family:'JB','JetBrains Mono',monospace;font-size:10px;color:#00E5FF;background:rgba(0,229,255,.12);padding:2px 6px">Recommended if on another PC</span>
+                            </div>
+                            <div style="font-family:'JB','JetBrains Mono',monospace;font-size:11px;color:var(--lab);margin-bottom:10px;line-height:1.5">
+                                Download the extension package directly to this PC, extract it anywhere (e.g., Downloads or Desktop), and select that extracted folder in Chrome:
+                            </div>
+                            <a href="/api/extension/download" id="btnDownloadExtZip" class="btn-action" style="background:#00E5FF;color:#0B0F19;font-weight:700;font-size:12px;padding:8px 16px;text-decoration:none;display:inline-flex;align-items:center;gap:6px" download="cybersec-extension.zip">
+                                <span>📥 Download Extension (.zip)</span>
+                            </a>
                         </div>
-                        <div style="display:flex;gap:10px;flex-wrap:wrap">
-                            <button type="button" id="btnCopyFolderPath" class="btn-action" style="background:#00E5FF;color:#0B0F19;font-weight:700;font-size:12px;padding:8px 14px" onclick="copyExtensionFolderPath(this)">
-                                <span>📋 Copy Folder Path</span>
-                            </button>
-                            <button type="button" id="btnRevealFinder" class="btn-action btn-secondary" style="font-size:12px;padding:8px 14px" onclick="revealExtensionInFinder(this)">
-                                <span>📂 Reveal in Mac Finder</span>
-                            </button>
+
+                        <!-- Method B: Local repo path if server is running on this PC -->
+                        <div style="background:rgba(255,255,255,.02);border:1px solid var(--border);padding:12px 14px">
+                            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+                                <span style="font-size:13px;font-weight:700;color:#fff">📁 Option B: Local Repository Path (When running on this PC)</span>
+                                <span style="font-family:'JB','JetBrains Mono',monospace;font-size:10px;color:var(--lab)">Auto-detected for this system</span>
+                            </div>
+                            <div id="extensionPathDisplay" style="background:#000;border:1px solid var(--border);padding:10px 14px;font-family:'JB','JetBrains Mono',monospace;font-size:12px;color:#00E5FF;word-break:break-all;margin-bottom:10px;user-select:all;-webkit-user-select:all;cursor:text" title="Click to select folder path"><%= typeof extensionFolderPath !== 'undefined' ? extensionFolderPath : '' %></div>
+                            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                                <button type="button" id="btnCopyFolderPath" class="btn-action" style="background:rgba(255,255,255,.08);color:#fff;border:1px solid var(--border);font-weight:600;font-size:12px;padding:8px 14px" onclick="copyExtensionFolderPath(this)">
+                                    <span>📋 Copy Folder Path</span>
+                                </button>
+                                <button type="button" id="btnRevealFinder" class="btn-action btn-secondary" style="font-size:12px;padding:8px 14px" onclick="revealExtensionInFinder(this)">
+                                    <span id="btnRevealFinderLabel"><%= (typeof serverPlatform !== 'undefined' && serverPlatform === 'win32') ? '📂 Reveal in File Explorer' : ((typeof serverPlatform !== 'undefined' && serverPlatform === 'darwin') ? '📂 Reveal in Mac Finder' : '📂 Reveal in Folder') %></span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1237,7 +1261,27 @@ function openExtensionModal(e) {
     modal.style.setProperty('display', 'flex', 'important');
     modal.classList.add('active');
 
-    // Check extension backend stream health
+    // Dynamically update stream endpoint with current host
+    var streamEl = document.getElementById('extStreamUrl');
+    var currentOrigin = window.location.origin;
+    if (streamEl) {
+        streamEl.textContent = currentOrigin + '/api/extension/scan';
+    }
+
+    // Adapt button text based on client operating system
+    var revealLabel = document.getElementById('btnRevealFinderLabel');
+    if (revealLabel) {
+        var p = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
+        if (/win/i.test(p)) {
+            revealLabel.textContent = '📂 Reveal in File Explorer';
+        } else if (/mac/i.test(p)) {
+            revealLabel.textContent = '📂 Reveal in Mac Finder';
+        } else {
+            revealLabel.textContent = '📂 Reveal in File Manager';
+        }
+    }
+
+    // Check extension backend stream health & get server-side extension path
     try {
         fetch('/api/extension/status')
             .then(function(r) { return r.json(); })
@@ -1245,9 +1289,15 @@ function openExtensionModal(e) {
                 var dot = document.getElementById('extServerDot');
                 var text = document.getElementById('extServerStatusText');
                 var badge = document.getElementById('extServerBadge');
+                var disp = document.getElementById('extensionPathDisplay');
+
+                if (data && data.folderPath && disp && (!disp.textContent || !disp.textContent.trim())) {
+                    disp.textContent = data.folderPath;
+                }
+
                 if (data && data.online) {
                     if (dot) dot.style.background = '#00E5FF';
-                    if (text) text.innerHTML = 'Telemetry Stream Endpoint: <strong style="color:#00E5FF">http://localhost:3000/api/extension/scan</strong> (' + (data.stats ? data.stats.totalScans : 0) + ' processed)';
+                    if (text) text.innerHTML = 'Telemetry Stream Endpoint: <strong style="color:#00E5FF">' + currentOrigin + '/api/extension/scan</strong> (' + (data.stats ? data.stats.totalScans : 0) + ' processed)';
                     if (badge) {
                         badge.textContent = '● SERVER ONLINE';
                         badge.style.color = '#00E5FF';
@@ -1290,9 +1340,9 @@ function copyChromeExtensionsUrl(btn) {
 
 function copyExtensionFolderPath(btn) {
     var triggerBtn = btn || document.getElementById('btnCopyFolderPath') || (typeof event !== 'undefined' && event && event.target ? event.target.closest('button') : null);
-    var folderPath = '/Users/arpi85222707gmail.com/Documents/cybersec/extension';
-    
     var disp = document.getElementById('extensionPathDisplay');
+    var folderPath = (disp ? disp.textContent.trim() : '') || window.EXTENSION_FOLDER_PATH || '';
+    
     if (disp) {
         try {
             var range = document.createRange();
@@ -1303,11 +1353,15 @@ function copyExtensionFolderPath(btn) {
         } catch (_) {}
     }
 
+    if (!folderPath) {
+        folderPath = window.location.origin + '/api/extension/download';
+    }
+
     copyTextToClipboard(folderPath, function(ok) {
         if (triggerBtn) {
             var orig = triggerBtn.getAttribute('data-orig-html') || triggerBtn.innerHTML;
             triggerBtn.setAttribute('data-orig-html', orig);
-            triggerBtn.innerHTML = '<span style="color:#0B0F19;font-weight:700">✓ Path Copied to Clipboard!</span>';
+            triggerBtn.innerHTML = '<span style="color:#00E5FF;font-weight:700">✓ Path Copied to Clipboard!</span>';
             setTimeout(function() {
                 triggerBtn.innerHTML = orig;
             }, 2500);
@@ -1322,7 +1376,7 @@ function revealExtensionInFinder(btn) {
     var orig = triggerBtn ? (triggerBtn.getAttribute('data-orig-html') || triggerBtn.innerHTML) : null;
     if (triggerBtn) {
         triggerBtn.setAttribute('data-orig-html', orig);
-        triggerBtn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Opening Finder...';
+        triggerBtn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> Opening...';
         triggerBtn.disabled = true;
     }
 
@@ -1334,14 +1388,14 @@ function revealExtensionInFinder(btn) {
     .then(function(data) {
         if (data.success) {
             if (triggerBtn) {
-                triggerBtn.innerHTML = '<span style="color:#00E5FF">✓ Opened in Finder!</span>';
+                triggerBtn.innerHTML = '<span style="color:#00E5FF">✓ Opened in Folder!</span>';
                 setTimeout(function() {
                     triggerBtn.innerHTML = orig;
                     triggerBtn.disabled = false;
                 }, 2500);
             }
         } else {
-            alert('Could not open Finder: ' + (data.error || 'Unknown error'));
+            alert('Could not open folder automatically: ' + (data.error || 'System file manager not reachable') + '\n\nPlease copy the folder path or click Download Extension (.zip).');
             if (triggerBtn) {
                 triggerBtn.innerHTML = orig;
                 triggerBtn.disabled = false;
@@ -1349,7 +1403,7 @@ function revealExtensionInFinder(btn) {
         }
     })
     .catch(function(err) {
-        alert('Network error revealing folder in Finder');
+        alert('Host server file manager not reachable. If opening on a separate PC, please click Download Extension (.zip).');
         if (triggerBtn) {
             triggerBtn.innerHTML = orig;
             triggerBtn.disabled = false;

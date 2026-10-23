@@ -187,6 +187,10 @@ router.get('/admin/email-scanner', requireAuth, (req, res) => {
   const overallRiskScore = avgRow && avgRow.avgScore !== null ? Math.round(avgRow.avgScore) : 0;
 
   const isOAuthConfigured = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const extensionFolderPath = path.resolve(__dirname, '..', 'extension');
+  const serverPlatform = process.platform;
+  const isLocalHost = req.hostname === 'localhost' || req.hostname === '127.0.0.1' || req.ip === '127.0.0.1' || req.ip === '::1';
+  const streamEndpoint = `${req.protocol}://${req.get('host') || 'localhost:3000'}/api/extension/scan`;
 
   res.render('admin/email-scanner', {
     account,
@@ -203,6 +207,10 @@ router.get('/admin/email-scanner', requireAuth, (req, res) => {
     threatFilter,
     searchQuery,
     isOAuthConfigured,
+    extensionFolderPath,
+    serverPlatform,
+    isLocalHost,
+    streamEndpoint,
     daemonStatus: backgroundScanner.getStatus(),
     oauthError: req.query.oauth_error || null,
     connectedSuccess: req.query.connected === 'true',

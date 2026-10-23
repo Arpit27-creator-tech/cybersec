@@ -1,8 +1,101 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
+const zlib = require('zlib');
 const db = require('../database/db');
 const { scanEmailThreats } = require('../services/threatScanner');
 const crypto = require('crypto');
+
+// ── Recursive Directory Traversal for Extension Packaging ──
+function getAllExtensionFiles(dirPath, arrayOfFiles = [], baseDir = dirPath) {
+  const files = fs.readdirSync(dirPath);
+  files.forEach((file) => {
+    const fullPath = path.join(dirPath, file);
+    if (fs.statSync(fullPath).isDirectory()) {
+      getAllExtensionFiles(fullPath, arrayOfFiles, baseDir);
+    } else {
+      const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
+      arrayOfFiles.push({
+        name: relativePath,
+        content: fs.readFileSync(fullPath)
+      });
+    }
+  });
+  return arrayOfFiles;
+}
+
+// ── In-Memory Standard ZIP Archive Generator ──
+function createZipBuffer(files) {
+  const localHeaders = [];
+  const centralHeaders = [];
+  let offset = 0;
+
+  for (const file of files) {
+    const nameBuf = Buffer.from(file.name);
+    const data = file.content;
+    const compressed = zlib.deflateRawSync(data);
+    const crc = zlib.crc32(data);
+
+    // Local file header (30 bytes + filename)
+    const lfh = Buffer.alloc(30 + nameBuf.length);
+    lfh.writeUInt32LE(0x04034b50, 0); // Local header signature
+    lfh.writeUInt16LE(20, 4);          // Version needed (2.0)
+    lfh.writeUInt16LE(0, 6);           // General purpose bit flag
+    lfh.writeUInt16LE(8, 8);           // Compression method (8 = deflate)
+    lfh.writeUInt16LE(0, 10);          // Last mod file time
+    lfh.writeUInt16LE(0, 12);          // Last mod file date
+    lfh.writeUInt32LE(crc, 14);        // CRC-32
+    lfh.writeUInt32LE(compressed.length, 18); // Compressed size
+    lfh.writeUInt32LE(data.length, 22);       // Uncompressed size
+    lfh.writeUInt16LE(nameBuf.length, 26);    // File name length
+    lfh.writeUInt16LE(0, 28);                 // Extra field length
+    nameBuf.copy(lfh, 30);
+
+    localHeaders.push(lfh, compressed);
+
+    // Central directory file header (46 bytes + filename)
+    const cdh = Buffer.alloc(46 + nameBuf.length);
+    cdh.writeUInt32LE(0x02014b50, 0); // Central header signature
+    cdh.writeUInt16LE(20, 4);          // Version made by
+    cdh.writeUInt16LE(20, 6);          // Version needed
+    cdh.writeUInt16LE(0, 8);           // Bit flag
+    cdh.writeUInt16LE(8, 10);          // Compression method
+    cdh.writeUInt16LE(0, 12);          // Last mod time
+    cdh.writeUInt16LE(0, 14);          // Last mod date
+    cdh.writeUInt32LE(crc, 16);        // CRC-32
+    cdh.writeUInt32LE(compressed.length, 20); // Compressed size
+    cdh.writeUInt32LE(data.length, 24);       // Uncompressed size
+    cdh.writeUInt16LE(nameBuf.length, 28);    // File name length
+    cdh.writeUInt16LE(0, 30);                 // Extra field length
+    cdh.writeUInt16LE(0, 32);                 // Comment length
+    cdh.writeUInt16LE(0, 34);                 // Disk number start
+    cdh.writeUInt16LE(0, 36);                 // Internal file attributes
+    cdh.writeUInt32LE(0, 38);                 // External file attributes
+    cdh.writeUInt32LE(offset, 42);            // Relative offset of local header
+    nameBuf.copy(cdh, 46);
+
+    centralHeaders.push(cdh);
+    offset += lfh.length + compressed.length;
+  }
+
+  const centralDirOffset = offset;
+  let centralDirSize = 0;
+  for (const ch of centralHeaders) centralDirSize += ch.length;
+
+  // End of central directory record (22 bytes)
+  const eocd = Buffer.alloc(22);
+  eocd.writeUInt32LE(0x06054b50, 0);   // EOCD signature
+  eocd.writeUInt16LE(0, 4);            // Number of this disk
+  eocd.writeUInt16LE(0, 6);            // Disk where central directory starts
+  eocd.writeUInt16LE(files.length, 8);  // Number of central directory records on this disk
+  eocd.writeUInt16LE(files.length, 10); // Total number of central directory records
+  eocd.writeUInt32LE(centralDirSize, 12);   // Size of central directory
+  eocd.writeUInt32LE(centralDirOffset, 16); // Offset of start of central directory
+  eocd.writeUInt16LE(0, 20);           // Comment length
+
+  return Buffer.concat([...localHeaders, ...centralHeaders, eocd]);
+}
 
 // ── CORS & Security Preflight Middleware for Extension ──
 router.use((req, res, next) => {
@@ -20,6 +113,7 @@ router.use((req, res, next) => {
  * GET /api/extension/status
  */
 router.get('/status', (req, res) => {
+  const extDir = path.resolve(__dirname, '..', 'extension');
   try {
     const totalScans = db.prepare('SELECT COUNT(*) as count FROM email_scans').get()?.count || 0;
     const threatsBlocked = db.prepare("SELECT COUNT(*) as count FROM email_scans WHERE threat_level IN ('high', 'critical') OR is_phishing = 1").get()?.count || 0;
@@ -29,6 +123,8 @@ router.get('/status', (req, res) => {
       service: 'CyberSec Email Threat Radar',
       version: '1.0.0',
       systemTime: new Date().toISOString(),
+      folderPath: extDir,
+      platform: process.platform,
       stats: {
         totalScans,
         threatsBlocked
@@ -39,6 +135,8 @@ router.get('/status', (req, res) => {
       online: true,
       service: 'CyberSec Email Threat Radar',
       version: '1.0.0',
+      folderPath: extDir,
+      platform: process.platform,
       stats: { totalScans: 0, threatsBlocked: 0 }
     });
   }
@@ -169,7 +267,7 @@ router.post('/scan', express.json({ limit: '5mb' }), (req, res) => {
       leakedSecrets: JSON.parse(threatReport.leaked_secrets || '[]'),
       authIssues: JSON.parse(threatReport.auth_issues || '[]'),
       summary: parsedSummary,
-      reportUrl: `http://localhost:3000/admin/email-scanner/report/${scanId}`
+      reportUrl: `${req.protocol}://${req.get('host') || 'localhost:3000'}/admin/email-scanner/report/${scanId}`
     });
   } catch (err) {
     console.error('Extension scan error:', err);
@@ -181,20 +279,58 @@ router.post('/scan', express.json({ limit: '5mb' }), (req, res) => {
 });
 
 /**
- * Reveal extension folder in native macOS Finder
- * POST /api/extension/reveal-finder
+ * Download Chrome Extension as a ZIP package
+ * GET /api/extension/download
+ * GET /api/extension/download-zip
  */
-router.post('/reveal-finder', (req, res) => {
+function handleDownloadZip(req, res) {
+  try {
+    const extDir = path.resolve(__dirname, '..', 'extension');
+    const files = getAllExtensionFiles(extDir);
+    const zipBuf = createZipBuffer(files);
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="cybersec-extension.zip"');
+    res.setHeader('Content-Length', zipBuf.length);
+    res.send(zipBuf);
+  } catch (err) {
+    console.error('Extension zip package error:', err);
+    res.status(500).json({ success: false, error: 'Could not package extension zip: ' + err.message });
+  }
+}
+
+router.get('/download', handleDownloadZip);
+router.get('/download-zip', handleDownloadZip);
+
+/**
+ * Reveal extension folder in native file manager (Finder / File Explorer / XDG)
+ * POST /api/extension/reveal-finder
+ * POST /api/extension/reveal-folder
+ */
+function handleRevealFolder(req, res) {
   const { exec } = require('child_process');
-  const path = require('path');
-  const manifestPath = path.join(__dirname, '..', 'extension', 'manifest.json');
-  exec(`open -R "${manifestPath}"`, (err) => {
+  const extDir = path.resolve(__dirname, '..', 'extension');
+  const manifestPath = path.join(extDir, 'manifest.json');
+
+  let cmd;
+  if (process.platform === 'darwin') {
+    cmd = `open -R "${manifestPath}"`;
+  } else if (process.platform === 'win32') {
+    cmd = `explorer.exe /select,"${manifestPath}"`;
+  } else {
+    cmd = `xdg-open "${extDir}"`;
+  }
+
+  exec(cmd, (err) => {
     if (err) {
-      return res.status(500).json({ success: false, error: err.message });
+      return res.status(500).json({ success: false, error: err.message, platform: process.platform });
     }
-    res.json({ success: true, folder: path.join(__dirname, '..', 'extension') });
+    res.json({ success: true, folder: extDir, platform: process.platform });
   });
-});
+}
+
+router.post('/reveal-finder', handleRevealFolder);
+router.post('/reveal-folder', handleRevealFolder);
 
 /**
  * Public Classifier API - Classify Email Text / Payload

@@ -52,8 +52,8 @@ Protect your inbox against sophisticated phishing attacks, typosquatting domains
 1. Open Chrome and go to `chrome://extensions`.
 2. Toggle on **Developer mode** in the top-right corner.
 3. Click **Load unpacked**.
-4. Select the `extension/` directory located inside this repository:
+4. Select the `extension/` directory located inside your local CyberSec repository, or the folder extracted from `cybersec-extension.zip` downloaded from the CyberSec dashboard:
    ```
-   /Users/arpi85222707gmail.com/Documents/cybersec/extension
+   <path-to-cybersec>/extension
    ```
 5. Open [Gmail](https://mail.google.com) and click on any email to begin scanning!

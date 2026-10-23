@@ -12,9 +12,9 @@ A unified Manifest V3 Chrome Extension that integrates both:
 2. Navigate to `chrome://extensions` in the address bar.
 3. Toggle on **Developer mode** in the top-right corner.
 4. Click the **Load unpacked** button in the top-left corner.
-5. Select either folder:
-   - `/Users/arpi85222707gmail.com/Documents/cybersec/extension`
-   *(or the repository root folder directly)*
+5. Select either:
+   - The `extension` folder located inside your cloned `cybersec` repository (e.g. `<path-to-cybersec>/extension`), OR
+   - Download the pre-packaged zip from the CyberSec Dashboard (`/admin/email-scanner` -> "Download Extension (.zip)"), extract it anywhere on your PC, and select that extracted folder.
 6. The extension is now loaded and active!
 
 ---
